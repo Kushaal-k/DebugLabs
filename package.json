@@ -1,0 +1,35 @@
+{
+  "name": "debugLabs",
+  "version": "1.0.0",
+  "description": "Full Stack Debugging Simulator is a hands-on learning platform where users investigate and fix bugs in existing repositories.",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Kushaal-k/DebugLabs.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "bugs": {
+    "url": "https://github.com/Kushaal-k/DebugLabs/issues"
+  },
+  "homepage": "https://github.com/Kushaal-k/DebugLabs#readme",
+  "workspaces": [
+    "server",
+    "execution-engine",
+    "shared",
+    "web"
+  ],
+  "scripts": {
+    "start": "npm run dev",
+    "dev": "npm run build --workspace=@debugLabs/shared && concurrently --kill-others-on-fail --names server,engine,web \"npm run dev --workspace=server\" \"npm run dev --workspace=execution-engine\" \"npm run dev --workspace=web\"",
+    "build": "npm run build --workspace=@debugLabs/shared && npm run build --workspace=server && npm run build --workspace=execution-engine && npm run build --workspace=web",
+    "typecheck": "npm run build --workspace=@debugLabs/shared && npm run typecheck --workspaces --if-present",
+    "lint": "npm run lint --workspaces --if-present",
+    "check": "npm run lint && npm run typecheck && npm test"
+  },
+  "private": true,
+  "devDependencies": {
+    "concurrently": "^10.0.6"
+  }
+}
