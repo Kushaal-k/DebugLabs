@@ -1,10 +1,12 @@
 import Dockerode from "dockerode";
-import { ResponseModel } from "./models/response.model.js";
 import { PassThrough } from "node:stream";
+import type {
+    ExecutionPayload,
+    ExecutionResult,
+    SUPPORTED_LANGUAGES
+} from "@debugLabs/shared";
 
 const docker = new Dockerode({ socketPath: '/var/run/docker.sock' });
-
-export type SUPPORTED_LANGUAGES = "javascript" | "python" | "java" | "cpp";
 
 const LANGUAGE_IMAGES: Record<SUPPORTED_LANGUAGES, string> = {
   javascript: "node:20",
@@ -44,11 +46,11 @@ export const ensureImageExists = async (image: string): Promise<void> => {
 }
 
 
-export async function executeCode(job_id: string) {
+export async function executeCode(payload: ExecutionPayload): Promise<ExecutionResult> {
+    const { code, stdin, language } = payload;
+    const image = LANGUAGE_IMAGES[language as SUPPORTED_LANGUAGES];
 
-    console.log(`[execution engine] Processing job: ${job_id}`);
-
-    let status;
+    let status: "Completed" | "Failed" = "Failed";
     let stdoutResult = "";
     let stderrResult = "";
     let executionTime = 0;
@@ -56,16 +58,6 @@ export async function executeCode(job_id: string) {
     let exitCode: number | null = 1;
 
     try {
-        const job = await ResponseModel.findById(job_id);
-
-        if (!job) {
-            console.error(`[execution engine] Job with ID ${job_id} not found.`);
-            return;
-        }
-
-        const { code, stdin, language } = job;
-        const image = LANGUAGE_IMAGES[language as SUPPORTED_LANGUAGES];
-
         await ensureImageExists(image);
 
         const startTime = performance.now();
@@ -136,47 +128,13 @@ export async function executeCode(job_id: string) {
         executionTime = performance.now() - startTime;
         memoryUsage = (await container.stats({ stream: false })).memory_stats.max_usage;
         exitCode = (await container.wait()).StatusCode;
-
         status = exitCode === 0 ? "Completed" : "Failed";
 
-        await job.updateOne({
-            $set: {
-                status,
-                stdout: stdoutResult,
-                error: stderrResult,
-                executionTime,
-                memoryUsed: memoryUsage,
-                exitCode,
-            }
-        })
-
-        try {
-            await container.remove({ force: true });
-        } catch (error) {
-            console.error(`[execution engine] Error removing container: ${error}`);
-        }
+        
+        await container.remove({ force: true });
     } catch (error) {
-        console.error(`[execution engine] Error executing job ${job_id}: ${error}`);
-
         status = "Failed";
         stderrResult = error instanceof Error ? error.message : "Unknown error";
-        executionTime = 0;
-        memoryUsage = 0;
-        exitCode = 1;
-
-        try {
-            await ResponseModel.findByIdAndUpdate(job_id, {
-                $set: {
-                    status,
-                    error: stderrResult,
-                    executionTime,
-                    memoryUsed: memoryUsage,
-                    exitCode,
-                }
-            });
-        } catch (error) {
-            console.error(`[execution engine] Error updating job ${job_id} after failure: ${error}`);
-        }
     }
 
     return {

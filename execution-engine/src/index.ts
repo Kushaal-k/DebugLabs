@@ -1,5 +1,6 @@
 import express from "express";
-import type { ServiceStatus } from "@debugLabs/shared";
+import type { ServiceStatus, ExecutionPayload } from "@debugLabs/shared";
+import { executeCode } from "./execution.js";
 
 const app = express();
 const port = Number(process.env.PORT ?? 3002);
@@ -15,6 +16,22 @@ app.get("/health", (_req, res) => {
 
   res.json(result);
 });
+
+app.post("/execute", async (req, res) => {
+  const payload: ExecutionPayload = req.body;
+
+  if(!payload.code || !payload.language) {
+    return res.status(400).json({ error: "Missing required fields: code and language" });
+  }
+
+  try {
+    const result = await executeCode(payload);
+    res.json(result);
+  } catch (error) {
+    console.error(`[execution engine] Error executing code: ${error}`);
+    res.status(500).json({ error: "Internal server error" });
+  }
+})
 
 const server = app.listen(port, host, (error) => {
   if (error) {
