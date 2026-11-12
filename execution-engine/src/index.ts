@@ -1,10 +1,11 @@
 import express from "express";
 import type { ServiceStatus, ExecutionPayload } from "@debugLabs/shared";
 import { executeCode } from "./execution.js";
+import "./worker.js";
 
 const app = express();
 const port = Number(process.env.PORT ?? 3002);
-const host = process.env.HOST ?? "127.0.0.1";
+const host = process.env.HOST ?? "0.0.0.0";
 
 app.use(express.json());
 

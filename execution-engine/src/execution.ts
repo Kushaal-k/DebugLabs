@@ -9,10 +9,10 @@ import type {
 const docker = new Dockerode({ socketPath: '/var/run/docker.sock' });
 
 const LANGUAGE_IMAGES: Record<SUPPORTED_LANGUAGES, string> = {
-  javascript: "node:20",
-  python: "python:3.12",
+  javascript: "node:24-slim",
+  python: "python:3.12-slim",
   java: "openjdk:21",
-  cpp: "gcc:13",
+  cpp: "gcc:14",
 };
 
 const LANGUAGES_RUN_COMMANDS: Record<
@@ -64,7 +64,7 @@ export async function executeCode(payload: ExecutionPayload): Promise<ExecutionR
 
         const container = await docker.createContainer({
             Image: image,
-            User: "/1000",
+            User: "1000",
             WorkingDir: "/tmp",
             HostConfig: {
                 Binds: ["/tmp:/tmp"],
