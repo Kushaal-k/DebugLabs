@@ -7,8 +7,19 @@ const submitJob = async (req: Request<{}, {}, ExecutionPayload>, res: Response) 
     try {
         const payload: ExecutionPayload = req.body;
 
+        if (!payload.language) {
+            return res.status(400).json({ error: "Language is required" });
+        }
+
+        if (!payload.code && (!payload.files || payload.files.length === 0)) {
+            return res.status(400).json({ error: "Either code or files must be provided" });
+        }
+
         const job = await ResponseModel.create({
             code: payload.code,
+            files: payload.files,
+            entrypoint: payload.entrypoint,
+            command: payload.command,
             stdin: payload.stdin,
             language: payload.language,
             status: "Queued",
@@ -20,6 +31,9 @@ const submitJob = async (req: Request<{}, {}, ExecutionPayload>, res: Response) 
             {
                 id: job_id,
                 code: payload.code,
+                files: payload.files,
+                entrypoint: payload.entrypoint,
+                command: payload.command,
                 stdin: payload.stdin,
                 language: payload.language,
             },
@@ -32,7 +46,7 @@ const submitJob = async (req: Request<{}, {}, ExecutionPayload>, res: Response) 
                     delay: 1000
                 }
             }
-        )
+        );
 
         res.status(201).json({ 
             jobId: job._id,
@@ -42,7 +56,7 @@ const submitJob = async (req: Request<{}, {}, ExecutionPayload>, res: Response) 
         console.error("submitJob error:", error);
         res.status(500).json({ error: "Failed to submit job" });
     }
-}
+};
 
 const getJobStatus = async (req: Request<{ jobId: string }>, res: Response) => {
     const { jobId } = req.params;
@@ -67,6 +81,6 @@ const getJobStatus = async (req: Request<{ jobId: string }>, res: Response) => {
     } catch (error) {
         res.status(500).json({ error: "Failed to retrieve job status" });
     }
-}
+};
 
 export { submitJob, getJobStatus };
