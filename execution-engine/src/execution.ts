@@ -11,14 +11,14 @@ const docker = new Dockerode({ socketPath: "/var/run/docker.sock" });
 
 export const WORKSPACE_DIR = "/tmp/workspace";
 
-const LANGUAGE_IMAGES: Record<SUPPORTED_LANGUAGES, string> = {
+export const LANGUAGE_IMAGES: Record<SUPPORTED_LANGUAGES, string> = {
   javascript: "node:24-slim",
   python: "python:3.12-slim",
   java: "openjdk:21",
   cpp: "gcc:14",
 };
 
-const DEFAULT_ENTRYPOINTS: Record<SUPPORTED_LANGUAGES, string> = {
+export const DEFAULT_ENTRYPOINTS: Record<SUPPORTED_LANGUAGES, string> = {
   javascript: "index.js",
   python: "main.py",
   java: "Main.java",
