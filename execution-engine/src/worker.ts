@@ -7,15 +7,17 @@ interface ExecutionJobData extends ExecutionPayload {
     id: string;
 }
 
-// BullMQ worker to check for jobs in queue - execution-queue and then execute it
 export const worker = new Worker<ExecutionJobData>(
     "execution-queue",
     async (job: Job<ExecutionJobData>) => {
         console.log(`[Worker] Picked up job ${job.data.id}`);
         return await executeCode({
             code: job.data.code,
-            stdin: job.data.stdin,
+            files: job.data.files,
+            entrypoint: job.data.entrypoint,
             language: job.data.language,
+            stdin: job.data.stdin,
+            command: job.data.command,
         });
     },
     {
