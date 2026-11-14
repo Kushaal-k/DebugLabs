@@ -26,7 +26,7 @@
     "build": "npm run build --workspace=@debugLabs/shared && npm run build --workspace=server && npm run build --workspace=execution-engine && npm run build --workspace=web",
     "typecheck": "npm run build --workspace=@debugLabs/shared && npm run typecheck --workspaces --if-present",
     "lint": "npm run lint --workspaces --if-present",
-    "test": "npm run build && node --test test/smoke.test.js",
+    "test": "npm run build && node --test test/*.test.js",
     "check": "npm run lint && npm run typecheck && npm test"
   },
   "private": true,
