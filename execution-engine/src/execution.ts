@@ -1,5 +1,9 @@
 import Dockerode from "dockerode";
 import tar from "tar-stream";
+import fs from "node:fs";
+import path from "node:path";
+import os from "node:os";
+import { spawn } from "node:child_process";
 import type {
   ExecutionFile,
   ExecutionPayload,
@@ -24,6 +28,23 @@ const DEFAULT_ENTRYPOINTS: Record<SUPPORTED_LANGUAGES, string> = {
   java: "Main.java",
   cpp: "main.cpp",
 };
+
+export async function isDockerAvailable(): Promise<boolean> {
+  const socketPath = "/var/run/docker.sock";
+  try {
+    if (!fs.existsSync(socketPath)) {
+      return false;
+    }
+    const pingPromise = docker.ping();
+    const timeoutPromise = new Promise((_, reject) =>
+      setTimeout(() => reject(new Error("Docker ping timed out")), 1000)
+    );
+    await Promise.race([pingPromise, timeoutPromise]);
+    return true;
+  } catch {
+    return false;
+  }
+}
 
 export async function createWorkspaceArchive(files: readonly ExecutionFile[]): Promise<Buffer> {
   const pack = tar.pack();
@@ -123,9 +144,174 @@ function resolveRunCommand(payload: ExecutionPayload, entrypoint: string): strin
   }
 }
 
+export async function executeLocally(
+  payload: ExecutionPayload,
+  entrypoint: string,
+  files: ExecutionFile[]
+): Promise<ExecutionResult> {
+  const tempDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), "debuglabs-run-"));
+  const startTime = performance.now();
+  let stdoutResult = "";
+  let stderrResult = "";
+  let exitCode: number | null = 1;
+  let status: "Completed" | "Failed" = "Failed";
+
+  try {
+    for (const file of files) {
+      const cleanPath = file.path.replace(/^\/+/, "");
+      const targetPath = path.join(tempDir, cleanPath);
+      await fs.promises.mkdir(path.dirname(targetPath), { recursive: true });
+      await fs.promises.writeFile(targetPath, file.content, "utf-8");
+    }
+
+    let bin = "node";
+    let args: string[] = [];
+
+    if (payload.command) {
+      bin = "sh";
+      args = ["-c", payload.command];
+    } else {
+      switch (payload.language) {
+        case "javascript":
+          bin = "node";
+          args = [path.join(tempDir, entrypoint)];
+          break;
+        case "python":
+          bin = "python3";
+          args = [path.join(tempDir, entrypoint)];
+          break;
+        case "cpp":
+          bin = "sh";
+          args = [
+            "-c",
+            `rm -rf "${tempDir}/out" && mkdir -p "${tempDir}/out" && g++ -O2 -o "${tempDir}/out/main" $(find "${tempDir}" -name '*.cpp') && "${tempDir}/out/main"`,
+          ];
+          break;
+        case "java":
+          bin = "sh";
+          args = [
+            "-c",
+            `rm -rf "${tempDir}/out" && mkdir -p "${tempDir}/out" && javac $(find "${tempDir}" -name '*.java') -d "${tempDir}/out" && java -cp "${tempDir}/out" Main`,
+          ];
+          break;
+        default:
+          bin = "node";
+          args = [path.join(tempDir, entrypoint)];
+          break;
+      }
+    }
+
+    const rootNodeModules = path.resolve(process.cwd(), "node_modules");
+    const parentNodeModules = path.resolve(process.cwd(), "../node_modules");
+    const nodePath = [
+      process.env.NODE_PATH || "",
+      rootNodeModules,
+      parentNodeModules,
+    ]
+      .filter(Boolean)
+      .join(":");
+
+    const child = spawn(bin, args, {
+      cwd: tempDir,
+      env: {
+        ...process.env,
+        PORT: process.env.PORT,
+        NODE_PATH: nodePath,
+      },
+      stdio: ["pipe", "pipe", "pipe"],
+    });
+
+    if (payload.stdin && child.stdin) {
+      child.stdin.write(payload.stdin);
+      child.stdin.end();
+    }
+
+    const MAX_OUTPUT_SIZE = 1024 * 1024;
+
+    child.stdout?.on("data", (chunk: Buffer) => {
+      if (stdoutResult.length < MAX_OUTPUT_SIZE) {
+        stdoutResult += chunk.toString("utf-8");
+      }
+    });
+
+    child.stderr?.on("data", (chunk: Buffer) => {
+      if (stderrResult.length < MAX_OUTPUT_SIZE) {
+        stderrResult += chunk.toString("utf-8");
+      }
+    });
+
+    await new Promise<void>((resolve) => {
+      let isDone = false;
+
+      const finish = (code: number | null) => {
+        if (isDone) return;
+        isDone = true;
+        exitCode = code;
+        resolve();
+      };
+
+      child.on("error", (err) => {
+        stderrResult += `\n${err.message}`;
+        finish(1);
+      });
+
+      child.on("close", (code) => {
+        finish(code ?? 0);
+      });
+
+      const serverCheckTimer = setTimeout(() => {
+        if (!isDone) {
+          if (
+            stdoutResult.includes("Server listening") ||
+            stdoutResult.includes("listening on") ||
+            stdoutResult.includes("listening")
+          ) {
+            child.kill("SIGTERM");
+            finish(0);
+          }
+        }
+      }, 1500);
+
+      const hardTimeoutTimer = setTimeout(() => {
+        clearTimeout(serverCheckTimer);
+        if (!isDone) {
+          child.kill("SIGKILL");
+          if (stderrResult.length === 0 && stdoutResult.length > 0) {
+            finish(0);
+          } else {
+            stderrResult += "\n[Execution timeout]: Process ran longer than 5 seconds.";
+            finish(124);
+          }
+        }
+      }, 5000);
+    });
+
+    status = exitCode === 0 ? "Completed" : "Failed";
+  } catch (err) {
+    status = "Failed";
+    stderrResult += err instanceof Error ? err.message : String(err);
+  } finally {
+    try {
+      await fs.promises.rm(tempDir, { recursive: true, force: true });
+    } catch {
+      // Ignore cleanup error
+    }
+  }
+
+  const executionTime = performance.now() - startTime;
+
+  return {
+    status,
+    stdout: stdoutResult,
+    error: stderrResult,
+    executionTime,
+    memoryUsed: process.memoryUsage().heapUsed,
+    exitCode,
+  };
+}
+
 export async function executeCode(payload: ExecutionPayload): Promise<ExecutionResult> {
   const { language, stdin } = payload;
-  const image = LANGUAGE_IMAGES[language];
   const entrypoint = payload.entrypoint || DEFAULT_ENTRYPOINTS[language];
 
   const files: ExecutionFile[] =
@@ -133,6 +319,13 @@ export async function executeCode(payload: ExecutionPayload): Promise<ExecutionR
       ? payload.files
       : [{ path: entrypoint, content: payload.code ?? "" }];
 
+  const dockerReady = await isDockerAvailable();
+  if (!dockerReady) {
+    console.log("[execution engine] Docker is not available. Using local sandbox execution fallback.");
+    return executeLocally(payload, entrypoint, files);
+  }
+
+  const image = LANGUAGE_IMAGES[language];
   let status: "Completed" | "Failed" = "Failed";
   let stdoutResult = "";
   let stderrResult = "";
