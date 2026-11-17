@@ -86,6 +86,9 @@ function twoSum(nums, target) {
   }
   return [];
 }
+
+// Example test run:
+console.log("Output:", twoSum([2, 7, 11, 15], 9));
 `,
       python: `from typing import List
 
@@ -98,9 +101,15 @@ class Solution:
                 return [seen[diff], i]
             seen[num] = i
         return []
+
+# Example test run:
+if __name__ == "__main__":
+    sol = Solution()
+    print("Output:", sol.twoSum([2, 7, 11, 15], 9))
 `,
       cpp: `#include <vector>
 #include <unordered_map>
+#include <iostream>
 using namespace std;
 
 class Solution {
@@ -117,9 +126,19 @@ public:
         return {};
     }
 };
+
+// Example test run:
+int main() {
+    Solution sol;
+    vector<int> nums = {2, 7, 11, 15};
+    auto res = sol.twoSum(nums, 9);
+    cout << "Output: [" << res[0] << ", " << res[1] << "]" << endl;
+    return 0;
+}
 `,
       java: `import java.util.HashMap;
 import java.util.Map;
+import java.util.Arrays;
 
 class Solution {
     public int[] twoSum(int[] nums, int target) {
@@ -132,6 +151,11 @@ class Solution {
             seen.put(nums[i], i);
         }
         return new int[0];
+    }
+
+    public static void main(String[] args) {
+        Solution sol = new Solution();
+        System.out.println("Output: " + Arrays.toString(sol.twoSum(new int[]{2, 7, 11, 15}, 9)));
     }
 }
 `,
@@ -200,6 +224,9 @@ function isAnagram(s, t) {
   }
   return true;
 }
+
+// Example test run:
+console.log("Output:", isAnagram("anagram", "nagaram"));
 `,
       python: `class Solution:
     def isAnagram(self, s: str, t: str) -> bool:
@@ -213,9 +240,15 @@ function isAnagram(s, t) {
                 return False
             count[c] -= 1
         return True
+
+# Example test run:
+if __name__ == "__main__":
+    sol = Solution()
+    print("Output:", str(sol.isAnagram("anagram", "nagaram")).lower())
 `,
       cpp: `#include <string>
 #include <vector>
+#include <iostream>
 using namespace std;
 
 class Solution {
@@ -230,6 +263,13 @@ public:
         return true;
     }
 };
+
+// Example test run:
+int main() {
+    Solution sol;
+    cout << "Output: " << (sol.isAnagram("anagram", "nagaram") ? "true" : "false") << endl;
+    return 0;
+}
 `,
       java: `class Solution {
     public boolean isAnagram(String s, String t) {
@@ -240,6 +280,11 @@ public:
             if (--counts[c - 'a'] < 0) return false;
         }
         return true;
+    }
+
+    public static void main(String[] args) {
+        Solution sol = new Solution();
+        System.out.println("Output: " + sol.isAnagram("anagram", "nagaram"));
     }
 }
 `,
