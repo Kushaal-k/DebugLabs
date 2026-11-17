@@ -43,39 +43,42 @@ export function FileExplorer({ files, activeFileId, onSelectFile }: Props) {
   );
 
   return (
-    <aside className="w-64 bg-[#161b22] border-r border-[#30363d] flex flex-col select-none">
-      <div className="px-3 py-2.5 text-[11px] font-semibold uppercase tracking-wider text-[#8b949e] border-b border-[#30363d]">
-        DebugLabs Explorer
+    <aside className="w-60 bg-[#0f0f10] border-r border-white/[0.08] flex flex-col select-none shrink-0">
+      <div className="h-9 px-3.5 flex items-center justify-between text-xs font-medium text-[#85858b] border-b border-white/[0.08]">
+        <span>Explorer</span>
+        <span className="text-[11px] font-mono text-[#85858b]/70">
+          {files.length} files
+        </span>
       </div>
 
-      <div className="flex-1 overflow-y-auto py-2 text-sm">
+      <div className="flex-1 overflow-y-auto p-2 text-sm custom-scrollbar">
         {folders.map((folder) => {
           const isOpen = Boolean(openFolders[folder]);
           const folderFiles = files.filter((f) => f.folder === folder);
 
           return (
-            <div key={folder}>
+            <div key={folder} className="mb-0.5">
               <button
                 type="button"
                 aria-expanded={isOpen}
                 onClick={() => toggleFolder(folder)}
-                className="w-full flex items-center gap-1.5 px-2.5 py-1 hover:bg-[#21262d] text-[#c9d1d9] cursor-pointer"
+                className="w-full flex items-center gap-1.5 px-2 py-1 text-xs rounded-[4px] hover:bg-[#161618] text-[#a1a1a6] hover:text-[#ededed] cursor-pointer transition-colors duration-150"
               >
                 {isOpen ? (
-                  <ChevronDown className="w-3.5 h-3.5 text-[#8b949e]" />
+                  <ChevronDown className="w-3.5 h-3.5 text-[#85858b] stroke-[1.5]" />
                 ) : (
-                  <ChevronRight className="w-3.5 h-3.5 text-[#8b949e]" />
+                  <ChevronRight className="w-3.5 h-3.5 text-[#85858b] stroke-[1.5]" />
                 )}
                 {isOpen ? (
-                  <FolderOpen className="w-4 h-4 text-sky-400" />
+                  <FolderOpen className="w-3.5 h-3.5 text-[#85858b] stroke-[1.5]" />
                 ) : (
-                  <Folder className="w-4 h-4 text-sky-400" />
+                  <Folder className="w-3.5 h-3.5 text-[#85858b] stroke-[1.5]" />
                 )}
-                <span>{folder}</span>
+                <span className="font-mono text-[12px]">{folder}</span>
               </button>
 
               {isOpen && (
-                <div className="pl-6">
+                <div className="pl-4 mt-0.5 space-y-0.5">
                   {folderFiles.map((file) => (
                     <FileTreeItem
                       key={file.id}
@@ -91,14 +94,14 @@ export function FileExplorer({ files, activeFileId, onSelectFile }: Props) {
         })}
 
         {rootFiles.length > 0 && (
-          <div className="mt-1">
+          <div className="mt-2 pt-2 border-t border-white/[0.06] space-y-0.5">
             {rootFiles.map((file) => (
               <FileTreeItem
                 key={file.id}
                 file={file}
                 isActive={file.id === activeFileId}
                 onSelect={onSelectFile}
-                className="px-4"
+                className="px-2"
               />
             ))}
           </div>
