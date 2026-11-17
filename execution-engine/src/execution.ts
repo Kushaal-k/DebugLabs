@@ -1,4 +1,7 @@
+import fs from "node:fs";
 import path from "node:path";
+import os from "node:os";
+import { spawn } from "node:child_process";
 import Dockerode from "dockerode";
 import tar from "tar-stream";
 import type {
@@ -27,6 +30,23 @@ const DEFAULT_ENTRYPOINTS: Record<SUPPORTED_LANGUAGES, string> = {
   java: "Main.java",
   cpp: "main.cpp",
 };
+
+export async function isDockerAvailable(): Promise<boolean> {
+  const socketPath = "/var/run/docker.sock";
+  try {
+    if (!fs.existsSync(socketPath)) {
+      return false;
+    }
+    const pingPromise = docker.ping();
+    const timeoutPromise = new Promise((_, reject) =>
+      setTimeout(() => reject(new Error("Docker ping timed out")), 1000)
+    );
+    await Promise.race([pingPromise, timeoutPromise]);
+    return true;
+  } catch {
+    return false;
+  }
+}
 
 function sanitizeRelativePath(rawPath: string): string {
   const normalized = path.posix.normalize(rawPath).replace(/^\/+/, "");
@@ -58,12 +78,13 @@ export async function createWorkspaceArchive(files: readonly ExecutionFile[]): P
     const fullEntryPath = `workspace/${entryPath}`;
 
     const parts = fullEntryPath.split("/");
-    for (let i = 1; i < parts.length; i++) {
-      const dirPath = parts.slice(0, i).join("/");
-      if (!createdDirs.has(dirPath)) {
-        createdDirs.add(dirPath);
+    let currentDir = "";
+    for (let i = 0; i < parts.length - 1; i++) {
+      currentDir = currentDir ? `${currentDir}/${parts[i]}` : parts[i];
+      if (!createdDirs.has(currentDir)) {
+        createdDirs.add(currentDir);
         pack.entry({
-          name: dirPath,
+          name: currentDir,
           type: "directory",
           uid: 1000,
           gid: 1000,
@@ -72,95 +93,74 @@ export async function createWorkspaceArchive(files: readonly ExecutionFile[]): P
       }
     }
 
+    const contentBuffer = Buffer.from(file.content, "utf-8");
     pack.entry(
       {
         name: fullEntryPath,
+        size: contentBuffer.length,
         uid: 1000,
         gid: 1000,
         mode: 0o644,
       },
-      file.content
+      contentBuffer
     );
   }
 
   pack.finalize();
 
-  const chunks: Buffer[] = [];
-  for await (const chunk of pack) {
-    chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk as Uint8Array));
-  }
-
-  return Buffer.concat(chunks);
+  return new Promise<Buffer>((resolve, reject) => {
+    const chunks: Buffer[] = [];
+    pack.on("data", (chunk: Buffer) => chunks.push(chunk));
+    pack.on("end", () => resolve(Buffer.concat(chunks)));
+    pack.on("error", reject);
+  });
 }
-
-const STREAM_HEADER_SIZE = 8;
-const STREAM_TYPE_STDERR = 2;
 
 export function demuxDockerStream(buffer: Buffer): { stdout: string; stderr: string } {
-  const stdoutChunks: Buffer[] = [];
-  const stderrChunks: Buffer[] = [];
+  let stdout = "";
+  let stderr = "";
   let offset = 0;
 
-  while (offset + STREAM_HEADER_SIZE <= buffer.length) {
-    const streamType = buffer[offset];
-    const payloadLength = buffer.readUInt32BE(offset + 4);
-    const payloadStart = offset + STREAM_HEADER_SIZE;
-    const payloadEnd = payloadStart + payloadLength;
+  while (offset + 8 <= buffer.length) {
+    const streamType = buffer.readUInt8(offset);
+    const frameSize = buffer.readUInt32BE(offset + 4);
+    offset += 8;
 
-    if (streamType === undefined || streamType > STREAM_TYPE_STDERR || payloadEnd > buffer.length) {
-      stdoutChunks.push(buffer.subarray(offset));
-      return {
-        stdout: Buffer.concat(stdoutChunks).toString("utf-8"),
-        stderr: Buffer.concat(stderrChunks).toString("utf-8"),
-      };
+    if (offset + frameSize > buffer.length) {
+      break;
     }
 
-    const payload = buffer.subarray(payloadStart, payloadEnd);
-    (streamType === STREAM_TYPE_STDERR ? stderrChunks : stdoutChunks).push(payload);
-    offset = payloadEnd;
+    const payload = buffer.subarray(offset, offset + frameSize).toString("utf-8");
+    offset += frameSize;
+
+    if (streamType === 1) {
+      stdout += payload;
+    } else if (streamType === 2) {
+      stderr += payload;
+    }
   }
 
-  if (offset < buffer.length) {
-    stdoutChunks.push(buffer.subarray(offset));
+  if (!stdout && !stderr && buffer.length > 0) {
+    stdout = buffer.toString("utf-8");
   }
 
-  return {
-    stdout: Buffer.concat(stdoutChunks).toString("utf-8"),
-    stderr: Buffer.concat(stderrChunks).toString("utf-8"),
-  };
+  return { stdout, stderr };
 }
 
-const activePulls = new Map<string, Promise<void>>();
-
-export const ensureImageExists = async (image: string): Promise<void> => {
+async function ensureImageExists(image: string): Promise<void> {
   try {
     await docker.getImage(image).inspect();
-    return;
   } catch {
-    // Image not present locally; pull below
-  }
-
-  let pullPromise = activePulls.get(image);
-  if (!pullPromise) {
-    pullPromise = (async () => {
-      console.log(`[execution engine] Pulling ${image}...`);
-      const stream = await docker.pull(image);
-      await new Promise((resolve, reject) => {
-        docker.modem.followProgress(stream, (err, res) => {
-          if (err) reject(err);
-          else resolve(res);
-        });
+    console.log(`[execution engine] Pulling ${image}...`);
+    const stream = await docker.pull(image);
+    await new Promise<void>((resolve, reject) => {
+      docker.modem.followProgress(stream, (err) => {
+        if (err) reject(err);
+        else resolve();
       });
-      console.log(`[execution engine] Pulled ${image} successfully.`);
-    })().finally(() => {
-      activePulls.delete(image);
     });
-
-    activePulls.set(image, pullPromise);
   }
-
-  await pullPromise;
-};
+}
 
 function resolveRunCommand(payload: ExecutionPayload, entrypoint: string): string[] {
   if (payload.command) {
@@ -193,6 +193,157 @@ function resolveRunCommand(payload: ExecutionPayload, entrypoint: string): strin
   }
 }
 
+export async function executeLocally(
+  payload: ExecutionPayload,
+  entrypoint: string,
+  files: ExecutionFile[]
+): Promise<ExecutionResult> {
+  const tempDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), "debuglabs-run-"));
+  const startTime = performance.now();
+  let stdoutResult = "";
+  let stderrResult = "";
+  let exitCode: number | null = 1;
+  let status: "Completed" | "Failed" = "Failed";
+
+  try {
+    for (const file of files) {
+      const cleanPath = sanitizeRelativePath(file.path);
+      const targetPath = path.join(tempDir, cleanPath);
+      await fs.promises.mkdir(path.dirname(targetPath), { recursive: true });
+      await fs.promises.writeFile(targetPath, file.content, "utf-8");
+    }
+
+    let bin = "node";
+    let args: string[] = [];
+
+    if (payload.command) {
+      bin = "sh";
+      args = ["-c", payload.command];
+    } else {
+      switch (payload.language) {
+        case "javascript":
+          bin = "node";
+          args = [path.join(tempDir, entrypoint)];
+          break;
+        case "python":
+          bin = "python3";
+          args = [path.join(tempDir, entrypoint)];
+          break;
+        case "cpp":
+          bin = "sh";
+          args = [
+            "-c",
+            `rm -rf "${tempDir}/out" && mkdir -p "${tempDir}/out" && g++ -O2 -o "${tempDir}/out/main" $(find "${tempDir}" -name '*.cpp') && "${tempDir}/out/main"`,
+          ];
+          break;
+        case "java":
+          bin = "sh";
+          args = [
+            "-c",
+            `rm -rf "${tempDir}/out" && mkdir -p "${tempDir}/out" && javac $(find "${tempDir}" -name '*.java') -d "${tempDir}/out" && java -cp "${tempDir}/out" Main`,
+          ];
+          break;
+        default:
+          bin = "node";
+          args = [path.join(tempDir, entrypoint)];
+          break;
+      }
+    }
+
+    const rootNodeModules = path.resolve(process.cwd(), "node_modules");
+    const parentNodeModules = path.resolve(process.cwd(), "../node_modules");
+    const nodePath = [
+      rootNodeModules,
+      parentNodeModules,
+      process.env.NODE_PATH || "",
+    ]
+      .filter(Boolean)
+      .join(":");
+
+    const child = spawn(bin, args, {
+      cwd: tempDir,
+      env: {
+        ...process.env,
+        PORT: process.env.PORT || "3000",
+        NODE_PATH: nodePath,
+      },
+      stdio: ["pipe", "pipe", "pipe"],
+    });
+
+    if (payload.stdin && child.stdin) {
+      child.stdin.write(payload.stdin);
+      child.stdin.end();
+    }
+
+    child.stdout?.on("data", (chunk: Buffer) => {
+      if (stdoutResult.length < MAX_OUTPUT_SIZE) {
+        stdoutResult += chunk.toString("utf-8");
+      }
+    });
+
+    child.stderr?.on("data", (chunk: Buffer) => {
+      if (stderrResult.length < MAX_OUTPUT_SIZE) {
+        stderrResult += chunk.toString("utf-8");
+      }
+    });
+
+    await new Promise<void>((resolve) => {
+      let isDone = false;
+
+      const finish = (code: number | null) => {
+        if (isDone) return;
+        isDone = true;
+        exitCode = code;
+        resolve();
+      };
+
+      child.on("error", (err) => {
+        stderrResult += `\n${err.message}`;
+        finish(1);
+      });
+
+      child.on("close", (code) => {
+        finish(code ?? 0);
+      });
+
+      const serverTimer = setTimeout(() => {
+        if (!isDone && (stdoutResult.includes("Server listening") || stdoutResult.includes("listening on") || stdoutResult.includes("listening"))) {
+          child.kill("SIGTERM");
+          finish(0);
+        }
+      }, 1500);
+
+      const timeoutTimer = setTimeout(() => {
+        clearTimeout(serverTimer);
+        if (!isDone) {
+          child.kill("SIGKILL");
+          finish(stdoutResult.length > 0 && stderrResult.length === 0 ? 0 : 124);
+        }
+      }, EXECUTION_TIMEOUT_MS);
+    });
+
+    status = exitCode === 0 ? "Completed" : "Failed";
+  } catch (err) {
+    status = "Failed";
+    stderrResult += err instanceof Error ? err.message : String(err);
+  } finally {
+    try {
+      await fs.promises.rm(tempDir, { recursive: true, force: true });
+    } catch {
+      // Ignore cleanup error
+    }
+  }
+
+  return {
+    status,
+    stdout: stdoutResult,
+    error: stderrResult,
+    executionTime: performance.now() - startTime,
+    memoryUsed: process.memoryUsage().heapUsed,
+    exitCode,
+  };
+}
+
 export async function executeCode(payload: ExecutionPayload): Promise<ExecutionResult> {
   const { language, stdin } = payload;
   const entrypoint = payload.entrypoint || DEFAULT_ENTRYPOINTS[language];
@@ -200,6 +351,12 @@ export async function executeCode(payload: ExecutionPayload): Promise<ExecutionR
     payload.files && payload.files.length > 0
       ? payload.files
       : [{ path: entrypoint, content: payload.code ?? "" }];
+
+  const dockerReady = await isDockerAvailable();
+  if (!dockerReady) {
+    console.log("[execution engine] Docker is not available. Using local sandbox fallback.");
+    return executeLocally(payload, entrypoint, files);
+  }
 
   const image = LANGUAGE_IMAGES[language];
   const hasStdin = stdin !== undefined;
@@ -298,8 +455,18 @@ export async function executeCode(payload: ExecutionPayload): Promise<ExecutionR
     stdoutResult = demuxed.stdout.slice(0, MAX_OUTPUT_SIZE);
     stderrResult = demuxed.stderr.slice(0, MAX_OUTPUT_SIZE);
   } catch (error) {
+    const errorMsg = error instanceof Error ? error.message : "Unknown error";
+    if (
+      errorMsg.includes("docker.sock") ||
+      errorMsg.includes("ENOENT") ||
+      errorMsg.includes("ECONNREFUSED") ||
+      errorMsg.includes("connect")
+    ) {
+      console.warn("[execution engine] Docker daemon unavailable, falling back to local sandbox execution.");
+      return executeLocally(payload, entrypoint, files);
+    }
     status = "Failed";
-    stderrResult = error instanceof Error ? error.message : "Unknown error";
+    stderrResult = errorMsg;
   } finally {
     if (container) {
       await container.remove({ force: true }).catch(() => {});
