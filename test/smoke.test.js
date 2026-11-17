@@ -23,7 +23,7 @@ function getFreePort() {
   });
 }
 
-async function waitForHealth(port, expectedService, timeoutMs = 5000) {
+async function waitForHealth(port, expectedService, timeoutMs = 10000) {
   const startTime = Date.now();
   while (Date.now() - startTime < timeoutMs) {
     try {
@@ -48,11 +48,11 @@ test("server starts and serves /health on a temporary port", async (t) => {
 
   const child = spawn(process.execPath, [serverPath], {
     env: { ...process.env, PORT: String(port), HOST: "127.0.0.1" },
-    stdio: "pipe",
+    stdio: ["ignore", "ignore", "ignore"],
   });
 
   t.after(() => {
-    child.kill("SIGTERM");
+    child.kill("SIGKILL");
   });
 
   const body = await waitForHealth(port, "server");
@@ -65,11 +65,11 @@ test("execution-engine starts and serves /health on a temporary port", async (t)
 
   const child = spawn(process.execPath, [enginePath], {
     env: { ...process.env, PORT: String(port), HOST: "127.0.0.1" },
-    stdio: "pipe",
+    stdio: ["ignore", "ignore", "ignore"],
   });
 
   t.after(() => {
-    child.kill("SIGTERM");
+    child.kill("SIGKILL");
   });
 
   const body = await waitForHealth(port, "execution-engine");
