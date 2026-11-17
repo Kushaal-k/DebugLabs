@@ -1,4 +1,5 @@
 import type { Request, Response } from "express";
+import mongoose from "mongoose";
 import type { ExecutionPayload } from "@debugLabs/shared";
 import { ResponseModel } from "../models/response.model.js";
 import { executionQueue } from "../index.js";
@@ -60,6 +61,10 @@ const submitJob = async (req: Request<{}, {}, ExecutionPayload>, res: Response) 
 
 const getJobStatus = async (req: Request<{ jobId: string }>, res: Response) => {
     const { jobId } = req.params;
+
+    if (!mongoose.isValidObjectId(jobId)) {
+        return res.status(404).json({ error: "Job not found" });
+    }
 
     try {
         const job = await ResponseModel.findById(jobId);

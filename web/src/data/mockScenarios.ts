@@ -9,8 +9,7 @@ export const DEBUGLABS_SCENARIO_FILES: ProjectFile[] = [
     content: `const express = require('express');
 const app = express();
 
-// BUG: Fallback port missing if process.env.PORT is undefined
-const PORT = process.env.PORT;
+const PORT = process.env.PORT || 3000;
 
 app.get('/api/health', (req, res) => {
   res.status(200).json({ status: 'ok', service: 'debuglabs-server' });
@@ -27,7 +26,9 @@ app.listen(PORT, () => {
     language: 'javascript',
     content: `function verifyToken(req, res, next) {
   const authHeader = req.headers['authorization'];
-  // BUG: Splits incorrectly when Bearer prefix is missing
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return res.status(401).json({ message: 'Unauthorized' });
+  }
   const token = authHeader.split(' ')[1];
 
   if (!token) {
@@ -52,7 +53,7 @@ export default function SimulatorDashboard() {
     fetch('/api/health')
       .then((res) => res.json())
       .then((data) => setStatus(data.status));
-  }); // BUG: Missing dependency array causes infinite fetch loop
+  }, []);
 
   return <div className="p-4">API Status: {status}</div>;
 }`,
@@ -65,8 +66,7 @@ export default function SimulatorDashboard() {
     content: `import subprocess
 
 def execute_code(file_path: str):
-    # BUG: No timeout set for infinite loops in user submissions
-    result = subprocess.run(["python3", file_path], capture_output=True, text=True)
+    result = subprocess.run(["python3", file_path], capture_output=True, text=True, timeout=10)
     return {"stdout": result.stdout, "stderr": result.stderr}
 `,
   },

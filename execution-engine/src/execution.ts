@@ -1,9 +1,10 @@
-import Dockerode from "dockerode";
-import tar from "tar-stream";
 import fs from "node:fs";
 import path from "node:path";
 import os from "node:os";
 import { spawn } from "node:child_process";
+import { fileURLToPath } from "node:url";
+import Dockerode from "dockerode";
+import tar from "tar-stream";
 import type {
   ExecutionFile,
   ExecutionPayload,
@@ -11,14 +12,19 @@ import type {
   SUPPORTED_LANGUAGES,
 } from "@debugLabs/shared";
 
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 const docker = new Dockerode({ socketPath: "/var/run/docker.sock" });
 
 export const WORKSPACE_DIR = "/tmp/workspace";
+const EXECUTION_TIMEOUT_MS = 10_000;
+const MAX_OUTPUT_SIZE = 1024 * 1024;
 
 const LANGUAGE_IMAGES: Record<SUPPORTED_LANGUAGES, string> = {
   javascript: "node:24-slim",
   python: "python:3.12-slim",
-  java: "openjdk:21",
+  java: "eclipse-temurin:21-jdk",
   cpp: "gcc:14",
 };
 
@@ -46,12 +52,59 @@ export async function isDockerAvailable(): Promise<boolean> {
   }
 }
 
+function sanitizeRelativePath(rawPath: string): string {
+  const normalized = path.posix.normalize(rawPath).replace(/^\/+/, "");
+  if (
+    !normalized ||
+    normalized === "." ||
+    normalized === ".." ||
+    normalized.startsWith("../")
+  ) {
+    throw new Error(`Invalid file path: "${rawPath}"`);
+  }
+  return normalized;
+}
+
 export async function createWorkspaceArchive(files: readonly ExecutionFile[]): Promise<Buffer> {
   const pack = tar.pack();
+  const createdDirs = new Set<string>(["workspace"]);
+
+  pack.entry({
+    name: "workspace",
+    type: "directory",
+    uid: 1000,
+    gid: 1000,
+    mode: 0o755,
+  });
 
   for (const file of files) {
-    const entryPath = file.path.replace(/^\/+/, "");
-    pack.entry({ name: `workspace/${entryPath}` }, file.content);
+    const entryPath = sanitizeRelativePath(file.path);
+    const fullEntryPath = `workspace/${entryPath}`;
+
+    const parts = fullEntryPath.split("/");
+    for (let i = 1; i < parts.length; i++) {
+      const dirPath = parts.slice(0, i).join("/");
+      if (!createdDirs.has(dirPath)) {
+        createdDirs.add(dirPath);
+        pack.entry({
+          name: dirPath,
+          type: "directory",
+          uid: 1000,
+          gid: 1000,
+          mode: 0o755,
+        });
+      }
+    }
+
+    pack.entry(
+      {
+        name: fullEntryPath,
+        uid: 1000,
+        gid: 1000,
+        mode: 0o644,
+      },
+      file.content
+    );
   }
 
   pack.finalize();
@@ -101,20 +154,36 @@ export function demuxDockerStream(buffer: Buffer): { stdout: string; stderr: str
   };
 }
 
+const activePulls = new Map<string, Promise<void>>();
+
 export const ensureImageExists = async (image: string): Promise<void> => {
   try {
     await docker.getImage(image).inspect();
+    return;
   } catch {
-    console.log(`[execution engine] Pulling ${image}...`);
-    const stream = await docker.pull(image);
-    await new Promise((resolve, reject) => {
-      docker.modem.followProgress(stream, (err, res) => {
-        if (err) reject(err);
-        resolve(res);
-      });
-    });
-    console.log(`[execution engine] Pulled ${image} successfully.`);
+    // Image not present locally; pull below
   }
+
+  let pullPromise = activePulls.get(image);
+  if (!pullPromise) {
+    pullPromise = (async () => {
+      console.log(`[execution engine] Pulling ${image}...`);
+      const stream = await docker.pull(image);
+      await new Promise((resolve, reject) => {
+        docker.modem.followProgress(stream, (err, res) => {
+          if (err) reject(err);
+          else resolve(res);
+        });
+      });
+      console.log(`[execution engine] Pulled ${image} successfully.`);
+    })().finally(() => {
+      activePulls.delete(image);
+    });
+
+    activePulls.set(image, pullPromise);
+  }
+
+  await pullPromise;
 };
 
 function resolveRunCommand(payload: ExecutionPayload, entrypoint: string): string[] {
@@ -122,25 +191,29 @@ function resolveRunCommand(payload: ExecutionPayload, entrypoint: string): strin
     return ["sh", "-c", payload.command];
   }
 
+  const safeEntrypoint = sanitizeRelativePath(entrypoint);
+
   switch (payload.language) {
     case "javascript":
-      return ["node", `${WORKSPACE_DIR}/${entrypoint}`];
+      return ["node", `${WORKSPACE_DIR}/${safeEntrypoint}`];
     case "python":
-      return ["python3", `${WORKSPACE_DIR}/${entrypoint}`];
+      return ["python3", `${WORKSPACE_DIR}/${safeEntrypoint}`];
     case "cpp":
       return [
         "sh",
         "-c",
         `rm -rf /tmp/out && mkdir -p /tmp/out && g++ -O2 -o /tmp/out/main $(find ${WORKSPACE_DIR} -name '*.cpp') && /tmp/out/main`,
       ];
-    case "java":
+    case "java": {
+      const mainClass = safeEntrypoint.replace(/\.java$/, "").replace(/\//g, ".");
       return [
         "sh",
         "-c",
-        `rm -rf /tmp/out && mkdir -p /tmp/out && javac $(find ${WORKSPACE_DIR} -name '*.java') -d /tmp/out && java -cp /tmp/out Main`,
+        `rm -rf /tmp/out && mkdir -p /tmp/out && javac $(find ${WORKSPACE_DIR} -name '*.java') -d /tmp/out && java -cp /tmp/out ${mainClass}`,
       ];
+    }
     default:
-      return ["node", `${WORKSPACE_DIR}/${entrypoint}`];
+      return ["node", `${WORKSPACE_DIR}/${safeEntrypoint}`];
   }
 }
 
@@ -158,7 +231,7 @@ export async function executeLocally(
 
   try {
     for (const file of files) {
-      const cleanPath = file.path.replace(/^\/+/, "");
+      const cleanPath = sanitizeRelativePath(file.path);
       const targetPath = path.join(tempDir, cleanPath);
       await fs.promises.mkdir(path.dirname(targetPath), { recursive: true });
       await fs.promises.writeFile(targetPath, file.content, "utf-8");
@@ -201,12 +274,20 @@ export async function executeLocally(
       }
     }
 
-    const rootNodeModules = path.resolve(process.cwd(), "node_modules");
-    const parentNodeModules = path.resolve(process.cwd(), "../node_modules");
+    const rootNodeModules = path.resolve(__dirname, "../../node_modules");
+    if (fs.existsSync(rootNodeModules)) {
+      try {
+        await fs.promises.symlink(rootNodeModules, path.join(tempDir, "node_modules"), "junction");
+      } catch {
+        // Ignore symlink error
+      }
+    }
+
     const nodePath = [
-      process.env.NODE_PATH || "",
       rootNodeModules,
-      parentNodeModules,
+      path.resolve(process.cwd(), "node_modules"),
+      path.resolve(process.cwd(), "../node_modules"),
+      process.env.NODE_PATH || "",
     ]
       .filter(Boolean)
       .join(":");
@@ -215,7 +296,7 @@ export async function executeLocally(
       cwd: tempDir,
       env: {
         ...process.env,
-        PORT: process.env.PORT,
+        PORT: process.env.PORT || "3000",
         NODE_PATH: nodePath,
       },
       stdio: ["pipe", "pipe", "pipe"],
@@ -225,8 +306,6 @@ export async function executeLocally(
       child.stdin.write(payload.stdin);
       child.stdin.end();
     }
-
-    const MAX_OUTPUT_SIZE = 1024 * 1024;
 
     child.stdout?.on("data", (chunk: Buffer) => {
       if (stdoutResult.length < MAX_OUTPUT_SIZE) {
@@ -242,7 +321,6 @@ export async function executeLocally(
 
     await new Promise<void>((resolve) => {
       let isDone = false;
-
       const finish = (code: number | null) => {
         if (isDone) return;
         isDone = true;
@@ -259,31 +337,21 @@ export async function executeLocally(
         finish(code ?? 0);
       });
 
-      const serverCheckTimer = setTimeout(() => {
-        if (!isDone) {
-          if (
-            stdoutResult.includes("Server listening") ||
-            stdoutResult.includes("listening on") ||
-            stdoutResult.includes("listening")
-          ) {
-            child.kill("SIGTERM");
-            finish(0);
-          }
+      // Auto-terminate express server demos once listening
+      const serverTimer = setTimeout(() => {
+        if (!isDone && (stdoutResult.includes("Server listening") || stdoutResult.includes("listening on"))) {
+          child.kill("SIGTERM");
+          finish(0);
         }
       }, 1500);
 
-      const hardTimeoutTimer = setTimeout(() => {
-        clearTimeout(serverCheckTimer);
+      const timeoutTimer = setTimeout(() => {
+        clearTimeout(serverTimer);
         if (!isDone) {
           child.kill("SIGKILL");
-          if (stderrResult.length === 0 && stdoutResult.length > 0) {
-            finish(0);
-          } else {
-            stderrResult += "\n[Execution timeout]: Process ran longer than 5 seconds.";
-            finish(124);
-          }
+          finish(stdoutResult.length > 0 && stderrResult.length === 0 ? 0 : 124);
         }
-      }, 5000);
+      }, EXECUTION_TIMEOUT_MS);
     });
 
     status = exitCode === 0 ? "Completed" : "Failed";
@@ -298,13 +366,11 @@ export async function executeLocally(
     }
   }
 
-  const executionTime = performance.now() - startTime;
-
   return {
     status,
     stdout: stdoutResult,
     error: stderrResult,
-    executionTime,
+    executionTime: performance.now() - startTime,
     memoryUsed: process.memoryUsage().heapUsed,
     exitCode,
   };
@@ -313,7 +379,6 @@ export async function executeLocally(
 export async function executeCode(payload: ExecutionPayload): Promise<ExecutionResult> {
   const { language, stdin } = payload;
   const entrypoint = payload.entrypoint || DEFAULT_ENTRYPOINTS[language];
-
   const files: ExecutionFile[] =
     payload.files && payload.files.length > 0
       ? payload.files
@@ -321,69 +386,124 @@ export async function executeCode(payload: ExecutionPayload): Promise<ExecutionR
 
   const dockerReady = await isDockerAvailable();
   if (!dockerReady) {
-    console.log("[execution engine] Docker is not available. Using local sandbox execution fallback.");
+    console.log("[execution engine] Docker is not available. Using local sandbox fallback.");
     return executeLocally(payload, entrypoint, files);
   }
 
   const image = LANGUAGE_IMAGES[language];
+  const hasStdin = stdin !== undefined;
+
   let status: "Completed" | "Failed" = "Failed";
   let stdoutResult = "";
   let stderrResult = "";
   let executionTime = 0;
   let memoryUsage = 0;
-  let exitCode: number | null = 1;
+  let exitCode: number | null = null;
+  let container: Dockerode.Container | undefined;
 
   try {
+    if (!image) throw new Error(`Unsupported language: ${language}`);
     await ensureImageExists(image);
 
     const archive = await createWorkspaceArchive(files);
-    const startTime = performance.now();
     const cmd = resolveRunCommand(payload, entrypoint);
 
-    const container = await docker.createContainer({
+    const rootNodeModules = path.resolve(__dirname, "../../node_modules");
+    const binds: string[] = [];
+    if (fs.existsSync(rootNodeModules)) {
+      binds.push(`${rootNodeModules}:/node_modules:ro`);
+      binds.push(`${rootNodeModules}:/tmp/node_modules:ro`);
+    }
+
+    container = await docker.createContainer({
       Image: image,
-      User: "1000",
+      User: "1000:1000",
       WorkingDir: WORKSPACE_DIR,
+      Env: [
+        "NODE_PATH=/node_modules:/tmp/node_modules:/tmp/workspace/node_modules",
+        "PORT=3000",
+        "PYTHONPATH=/tmp/workspace",
+      ],
       HostConfig: {
         Runtime: "runc",
         Memory: 512 * 1024 * 1024,
+        MemorySwap: 512 * 1024 * 1024,
         CpuQuota: 100000,
+        PidsLimit: 64,
+        Binds: binds,
       },
       NetworkDisabled: true,
-      StopTimeout: 10000,
+      StopTimeout: Math.ceil(EXECUTION_TIMEOUT_MS / 1000),
       Cmd: cmd,
-      AttachStdin: Boolean(stdin),
-      OpenStdin: Boolean(stdin),
-      StdinOnce: Boolean(stdin),
+      AttachStdin: hasStdin,
+      OpenStdin: hasStdin,
+      StdinOnce: hasStdin,
     });
 
     await container.putArchive(archive, { path: "/tmp" });
 
     let stdinStream: NodeJS.ReadWriteStream | undefined;
-    if (stdin) {
+    if (hasStdin) {
       stdinStream = await container.attach({
         stream: true,
         stdin: true,
-        stdout: false,
-        stderr: false,
+        hijack: true,
       });
+      stdinStream.on("error", () => {});
     }
 
+    let isServerListening = false;
+    let streamLogs = "";
+
+    const logStream = await container.attach({
+      stream: true,
+      stdout: true,
+      stderr: true,
+    });
+
+    logStream.on("data", (chunk: Buffer) => {
+      streamLogs += chunk.toString("utf-8");
+      if (
+        !isServerListening &&
+        (streamLogs.includes("Server listening") || streamLogs.includes("listening on"))
+      ) {
+        isServerListening = true;
+        setTimeout(() => {
+          container?.stop({ t: 1 }).catch(() => {});
+        }, 600);
+      }
+    });
+
+    const startTime = performance.now();
     await container.start();
 
-    if (stdinStream && stdin) {
-      stdinStream.write(stdin);
+    if (stdinStream) {
+      if (stdin && stdin.length > 0) {
+        stdinStream.write(stdin);
+      }
       stdinStream.end();
     }
 
-    const waitResult = await container.wait();
-    exitCode = waitResult.StatusCode;
+    let timeoutId: ReturnType<typeof setTimeout> | undefined;
+    const waitResult = await Promise.race([
+      container.wait().finally(() => {
+        if (timeoutId) clearTimeout(timeoutId);
+      }),
+      new Promise<never>((_, reject) => {
+        timeoutId = setTimeout(async () => {
+          await container?.kill().catch(() => {});
+          reject(new Error(`Execution timed out after ${EXECUTION_TIMEOUT_MS}ms`));
+        }, EXECUTION_TIMEOUT_MS);
+      }),
+    ]);
+
+    exitCode = isServerListening ? 0 : waitResult.StatusCode;
     executionTime = performance.now() - startTime;
     status = exitCode === 0 ? "Completed" : "Failed";
 
     try {
       const stats = await container.stats({ stream: false });
-      memoryUsage = stats.memory_stats?.max_usage ?? 0;
+      memoryUsage = stats.memory_stats?.max_usage ?? stats.memory_stats?.usage ?? 0;
     } catch {
       memoryUsage = 0;
     }
@@ -394,14 +514,24 @@ export async function executeCode(payload: ExecutionPayload): Promise<ExecutionR
     })) as unknown as Buffer;
 
     const demuxed = demuxDockerStream(Buffer.isBuffer(rawLogs) ? rawLogs : Buffer.from(rawLogs));
-    const MAX_OUTPUT_SIZE = 1024 * 1024;
     stdoutResult = demuxed.stdout.slice(0, MAX_OUTPUT_SIZE);
     stderrResult = demuxed.stderr.slice(0, MAX_OUTPUT_SIZE);
-
-    await container.remove({ force: true });
   } catch (error) {
     status = "Failed";
     stderrResult = error instanceof Error ? error.message : "Unknown error";
+  } finally {
+    if (container) {
+      await container.remove({ force: true }).catch(() => {});
+    }
+  }
+
+  // Graceful fallback: If Docker environment lacks hoisted node_modules, fall back to local sandbox
+  if (
+    status === "Failed" &&
+    (stderrResult.includes("MODULE_NOT_FOUND") || stderrResult.includes("Cannot find module"))
+  ) {
+    console.warn("[execution engine] Docker container missing modules, falling back to local sandbox execution.");
+    return executeLocally(payload, entrypoint, files);
   }
 
   return {
