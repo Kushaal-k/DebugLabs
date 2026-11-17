@@ -2,6 +2,29 @@ import type { ProjectFile } from '../types/workspace';
 
 export const DEBUGLABS_SCENARIO_FILES: ProjectFile[] = [
   {
+    id: 'dsa-solution',
+    name: 'solution.js',
+    folder: 'root',
+    language: 'javascript',
+    content: `/**
+ * @param {number[]} nums
+ * @param {number} target
+ * @return {number[]}
+ */
+function twoSum(nums, target) {
+  const map = new Map();
+  for (let i = 0; i < nums.length; i++) {
+    const diff = target - nums[i];
+    if (map.has(diff)) {
+      return [map.get(diff), i];
+    }
+    map.set(nums[i], i);
+  }
+  return [];
+}
+`,
+  },
+  {
     id: 'server-index',
     name: 'index.js',
     folder: 'server',
