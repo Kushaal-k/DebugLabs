@@ -1,22 +1,17 @@
 import { Bug, Play, RotateCcw, Loader2 } from 'lucide-react';
 import type { ProjectFile } from '../../types/workspace';
-import type { EngineMode } from '../../services/executionService';
 
 interface Props {
   activeFile: ProjectFile;
-  engineMode: EngineMode;
   isRunning: boolean;
-  onEngineModeChange: (mode: EngineMode) => void;
-  onRunTests: () => void;
+  onRunFile: () => void;
   onReset: () => void;
 }
 
 export function EditorToolbar({
   activeFile,
-  engineMode,
   isRunning,
-  onEngineModeChange,
-  onRunTests,
+  onRunFile,
   onReset,
 }: Props) {
   return (
@@ -31,20 +26,6 @@ export function EditorToolbar({
       </div>
 
       <div className="flex items-center gap-2.5">
-        <div className="flex items-center gap-1.5 bg-[#0d1117] border border-[#30363d] rounded px-2.5 py-1 text-xs text-[#c9d1d9]">
-          <span className="text-[#8b949e]">Engine:</span>
-          <select
-            value={engineMode}
-            onChange={(e) => onEngineModeChange(e.target.value as EngineMode)}
-            disabled={isRunning}
-            className="bg-transparent text-[#e6edf3] focus:outline-none cursor-pointer"
-          >
-            <option value="auto" className="bg-[#161b22]">Auto (Direct / Queue)</option>
-            <option value="direct" className="bg-[#161b22]">Direct Sandbox</option>
-            <option value="queue" className="bg-[#161b22]">Worker Queue</option>
-          </select>
-        </div>
-
         <button
           onClick={onReset}
           disabled={isRunning}
@@ -55,16 +36,17 @@ export function EditorToolbar({
         </button>
 
         <button
-          onClick={onRunTests}
+          onClick={onRunFile}
           disabled={isRunning}
-          className="flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-60 text-white text-xs font-medium px-3 py-1.5 rounded cursor-pointer transition"
+          className="flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-60 text-white text-xs font-medium px-3 py-1.5 rounded cursor-pointer transition shadow-sm"
+          title={`Execute ${activeFile.name} in container sandbox`}
         >
           {isRunning ? (
             <Loader2 className="w-3.5 h-3.5 animate-spin" />
           ) : (
-            <Play className="w-3.5 h-3.5" />
+            <Play className="w-3.5 h-3.5 fill-current" />
           )}
-          {isRunning ? 'Executing...' : 'Run Verification'}
+          {isRunning ? 'Running...' : `Run ${activeFile.name}`}
         </button>
       </div>
     </header>

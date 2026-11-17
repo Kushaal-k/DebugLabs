@@ -27,7 +27,7 @@ const SERVER_URL =
   (import.meta.env.VITE_SERVER_URL as string | undefined)?.replace(/\/+$/, '') ||
   '/api';
 
-function detectLanguage(file?: ProjectFile | null): 'javascript' | 'python' | 'java' | 'cpp' {
+export function detectLanguage(file?: ProjectFile | null): 'javascript' | 'python' | 'java' | 'cpp' {
   if (!file) return 'javascript';
   const name = file.name.toLowerCase();
   if (name.endsWith('.py') || file.language === 'python') return 'python';
@@ -36,7 +36,17 @@ function detectLanguage(file?: ProjectFile | null): 'javascript' | 'python' | 'j
   return 'javascript';
 }
 
-function buildPayload(files: ProjectFile[]): ExecutionPayload {
+export function buildSingleFilePayload(file: ProjectFile): ExecutionPayload {
+  const language = detectLanguage(file);
+  return {
+    code: file.content,
+    language,
+    entrypoint: file.name,
+    files: [{ path: file.name, content: file.content }],
+  };
+}
+
+export function buildPayload(files: ProjectFile[]): ExecutionPayload {
   const executionFiles: ExecutionFile[] = files.map((f) => ({
     path: f.folder === 'root' ? f.name : `${f.folder}/${f.name}`,
     content: f.content,
@@ -124,6 +134,20 @@ async function executeQueue(payload: ExecutionPayload, maxAttempts = 30): Promis
   throw new Error(`Execution timed out waiting for queue job ${jobId}`);
 }
 
+export async function executeSingleFile(file: ProjectFile): Promise<ExecutionResult> {
+  const payload = buildSingleFilePayload(file);
+  try {
+    return await executeDirect(payload);
+  } catch (directErr) {
+    console.warn('Direct execution failed, attempting queue:', directErr);
+    try {
+      return await executeQueue(payload);
+    } catch {
+      throw directErr;
+    }
+  }
+}
+
 export async function runProjectVerification(
   files: ProjectFile[],
   mode: EngineMode = 'auto'
@@ -138,7 +162,6 @@ export async function runProjectVerification(
     return await executeQueue(payload);
   }
 
-  // 'auto' mode: try direct first, fall back to queue if direct fails
   try {
     return await executeDirect(payload);
   } catch (directErr) {

@@ -4,7 +4,6 @@ import mongoose from "mongoose";
 import { QueueEvents, Queue } from "bullmq";
 import { Server } from "socket.io";
 import { createServer } from "node:http";
-import { spawn } from "node:child_process";
 import "./db/index.js";
 import { ResponseModel } from "./models/response.model.js";
 import jobRoutes from "./routes/jobs.routes.js";
@@ -34,16 +33,6 @@ app.get("/health", (_req, res) => {
 });
 
 const redisHost = process.env.REDIS_HOST ?? "127.0.0.1";
-if (redisHost === "127.0.0.1" || redisHost === "localhost") {
-  try {
-    spawn("redis-server", ["--daemonize", "yes", "--dir", "/tmp"], {
-      stdio: "ignore",
-      detached: true,
-    }).unref();
-  } catch {
-    // Ignore if redis-server is not installed
-  }
-}
 
 export const connection = {
   host: redisHost,

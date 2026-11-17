@@ -5,8 +5,8 @@ import { FileExplorer } from './components/explorer/FileExplorer';
 import { CodeEditor } from './components/editor/CodeEditor';
 import { EditorToolbar } from './components/editor/EditorToolbar';
 import { EditorTabs } from './components/editor/EditorTabs';
-import { OutputTerminal } from './components/terminal/OutputTerminal';
-import { runProjectVerification, type EngineMode } from './services/executionService';
+import { OutputTerminal, type BottomPanelTab } from './components/terminal/OutputTerminal';
+import { executeSingleFile } from './services/executionService';
 
 export default function App() {
   const [files, setFiles] = useState<ProjectFile[]>(DEBUGLABS_SCENARIO_FILES);
@@ -15,7 +15,7 @@ export default function App() {
     'problem-md',
   ]);
   const [activeFileId, setActiveFileId] = useState<string>('server-index');
-  const [engineMode, setEngineMode] = useState<EngineMode>('auto');
+  const [bottomTab, setBottomTab] = useState<BottomPanelTab>('output');
   const [logs, setLogs] = useState<string[]>([]);
   const [isRunning, setIsRunning] = useState<boolean>(false);
   const [failureCount, setFailureCount] = useState<number>(0);
@@ -56,17 +56,31 @@ export default function App() {
     ]);
   };
 
-  const handleRunTests = async () => {
+  const handleRunFile = async () => {
+    const targetFile = activeFile || files[0];
+    if (!targetFile) return;
+
+    if (targetFile.language === 'markdown' || targetFile.name.endsWith('.md')) {
+      setBottomTab('output');
+      setLogs((prev) => [
+        ...prev,
+        '',
+        `\x1b[33m[Notice]\x1b[0m ${targetFile.name} is a documentation file and cannot be executed directly. Please select a code file.`,
+      ]);
+      return;
+    }
+
     setIsRunning(true);
+    setBottomTab('output');
     setLogs((prev) => [
       ...prev,
       '',
-      `\x1b[36m→ Running code on Execution Engine (${engineMode})...\x1b[0m`,
+      `\x1b[36m→ Executing ${targetFile.name} (${targetFile.language}) in container sandbox...\x1b[0m`,
       '\x1b[90m--------------------------------------------------\x1b[0m',
     ]);
 
     try {
-      const result = await runProjectVerification(files, engineMode);
+      const result = await executeSingleFile(targetFile);
 
       if (result.stdout) {
         setLogs((prev) => [...prev, result.stdout]);
@@ -79,13 +93,13 @@ export default function App() {
         setFailureCount(0);
         setLogs((prev) => [
           ...prev,
-          `\x1b[32m✓ Verification passed\x1b[0m (mode: ${result.modeUsed}, exit code: ${result.exitCode}, time: ${result.executionTimeMs}ms, memory: ${result.memoryMb.toFixed(1)}MB)`,
+          `\x1b[32m✓ Finished: ${targetFile.name}\x1b[0m (exit code: ${result.exitCode}, time: ${result.executionTimeMs}ms, memory: ${result.memoryMb.toFixed(1)}MB)`,
         ]);
       } else {
         setFailureCount((c) => c + 1);
         setLogs((prev) => [
           ...prev,
-          `\x1b[31m✗ Execution failed\x1b[0m (exit code: ${result.exitCode}, time: ${result.executionTimeMs}ms, memory: ${result.memoryMb.toFixed(1)}MB)`,
+          `\x1b[31m✗ Failed: ${targetFile.name}\x1b[0m (exit code: ${result.exitCode}, time: ${result.executionTimeMs}ms, memory: ${result.memoryMb.toFixed(1)}MB)`,
         ]);
       }
     } catch (err) {
@@ -105,10 +119,8 @@ export default function App() {
     <div className="flex flex-col h-screen w-screen bg-[#0d1117] text-[#e6edf3]">
       <EditorToolbar
         activeFile={activeFile || files[0]}
-        engineMode={engineMode}
         isRunning={isRunning}
-        onEngineModeChange={setEngineMode}
-        onRunTests={handleRunTests}
+        onRunFile={handleRunFile}
         onReset={handleReset}
       />
 
@@ -141,6 +153,8 @@ export default function App() {
             logs={logs}
             isRunning={isRunning}
             failureCount={failureCount}
+            activeTab={bottomTab}
+            onTabChange={setBottomTab}
             onClear={() => {
               setLogs([]);
               setFailureCount(0);
