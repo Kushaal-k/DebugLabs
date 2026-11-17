@@ -14,7 +14,7 @@ function normalizeOutput(val: unknown): string {
   return String(val);
 }
 
-function parseTestInput(inputStr: string): Record<string, unknown> {
+function parseTestInput(inputStr: string, problemId?: string): Record<string, unknown> {
   const params: Record<string, unknown> = {};
   const parts = inputStr.split(/,\s*(?=[a-zA-Z_]\w*\s*=)/);
   for (const part of parts) {
@@ -29,6 +29,25 @@ function parseTestInput(inputStr: string): Record<string, unknown> {
       }
     }
   }
+
+  // Fallback for positional inputs like "[2, 7, 11, 15], 9" or '"anagram", "nagaram"'
+  if (Object.keys(params).length === 0 && inputStr.trim().length > 0) {
+    try {
+      const wrapped = JSON.parse(`[${inputStr}]`);
+      if (Array.isArray(wrapped)) {
+        if (problemId === 'two-sum') {
+          if (wrapped[0] !== undefined) params.nums = wrapped[0];
+          if (wrapped[1] !== undefined) params.target = wrapped[1];
+        } else if (problemId === 'valid-anagram') {
+          if (wrapped[0] !== undefined) params.s = wrapped[0];
+          if (wrapped[1] !== undefined) params.t = wrapped[1];
+        }
+      }
+    } catch {
+      // Positional parse failed; keep raw string
+    }
+  }
+
   return params;
 }
 
@@ -40,21 +59,40 @@ function executeJavaScriptTestCase(
 ): DsaTestCaseResult {
   const startTime = performance.now();
   try {
-    const params = parseTestInput(testCase.input);
+    const params = parseTestInput(testCase.input, problem.id);
     const paramNames = Object.keys(params);
     const paramValues = Object.values(params);
 
-    const fnMatch = code.match(/function\s+([a-zA-Z_]\w*)/);
-    const functionName = fnMatch ? fnMatch[1] : (problem.id === 'two-sum' ? 'twoSum' : 'isAnagram');
+    const fnMatch =
+      code.match(/function\s+([a-zA-Z_]\w*)/) ||
+      code.match(/(?:const|let|var)\s+([a-zA-Z_]\w*)\s*=/);
+    const functionName = fnMatch
+      ? fnMatch[1]
+      : problem.id === 'two-sum'
+      ? 'twoSum'
+      : 'isAnagram';
 
     const runner = new Function(
       ...paramNames,
       `
       ${code}
-      if (typeof ${functionName} !== 'function') {
+      let targetFn = typeof ${functionName} === 'function' ? ${functionName} : null;
+      if (!targetFn && typeof Solution === 'function') {
+        const inst = new Solution();
+        if (typeof inst.${functionName} === 'function') {
+          targetFn = inst.${functionName}.bind(inst);
+        }
+      }
+      if (!targetFn && typeof twoSum === 'function') {
+        targetFn = twoSum;
+      }
+      if (!targetFn && typeof isAnagram === 'function') {
+        targetFn = isAnagram;
+      }
+      if (!targetFn) {
         throw new Error('Function ${functionName} is not defined.');
       }
-      return ${functionName}(${paramNames.join(', ')});
+      return targetFn(${paramNames.join(', ')});
       `
     );
 
@@ -109,12 +147,12 @@ function executeNonJsTestCase(
   testCase: DsaTestCase
 ): DsaTestCaseResult {
   const startTime = performance.now();
-  const p = parseTestInput(testCase.input);
+  const p = parseTestInput(testCase.input, problem.id);
 
   try {
     // 1. Structural & signature validation
     if (problem.id === 'two-sum') {
-      const hasTwoSum = /twoSum/i.test(code);
+      const hasTwoSum = /two_?sum/i.test(code);
       if (!hasTwoSum) {
         return {
           testCaseId: testCase.id,
@@ -123,13 +161,13 @@ function executeNonJsTestCase(
           actualOutput: 'Compilation Error',
           expectedOutput: testCase.expectedOutput,
           executionTimeMs: 1,
-          errorMessage: `Missing method 'twoSum' in ${language} code`,
+          errorMessage: `Missing method 'twoSum' or 'two_sum' in ${language} code`,
         };
       }
 
       // Check if user solution returns empty / dummy without searching
       const isUnimplemented =
-        /return\s*(\{\}|\[\]|new\s+int\[\]\{\}|null)\s*;/i.test(code) &&
+        /return\s*(\{\}|\[\]|new\s+int\[\]\{\}|null|None)\s*;?/i.test(code) &&
         !/for\s*\(/.test(code) &&
         !/for\s+\w+\s+in/i.test(code);
 
@@ -186,7 +224,7 @@ function executeNonJsTestCase(
       };
     } else {
       // Valid Anagram
-      const hasAnagram = /isAnagram/i.test(code);
+      const hasAnagram = /is_?anagram/i.test(code);
       if (!hasAnagram) {
         return {
           testCaseId: testCase.id,
@@ -195,7 +233,7 @@ function executeNonJsTestCase(
           actualOutput: 'Compilation Error',
           expectedOutput: testCase.expectedOutput,
           executionTimeMs: 1,
-          errorMessage: `Missing method 'isAnagram' in ${language} code`,
+          errorMessage: `Missing method 'isAnagram' or 'is_anagram' in ${language} code`,
         };
       }
 
