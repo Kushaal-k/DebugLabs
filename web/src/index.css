@@ -1,12 +1,43 @@
 @import "tailwindcss";
 @import "@fontsource/inter/400.css";
+@import "@fontsource/inter/500.css";
 @import "@fontsource/inter/600.css";
 @import "@fontsource/jetbrains-mono/400.css";
+@import "@fontsource/jetbrains-mono/500.css";
+
+:root {
+  color-scheme: dark;
+}
 
 body {
   margin: 0;
-  font-family: 'Inter', sans-serif;
-  background-color: #0d1117;
-  color: #e6edf3;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  background-color: #0f0f10;
+  color: #ededed;
   overflow: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Custom quiet scrollbar */
+::-webkit-scrollbar,
+.xterm .xterm-viewport::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track,
+.xterm .xterm-viewport::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb,
+.xterm .xterm-viewport::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover,
+.xterm .xterm-viewport::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.xterm {
+  padding: 0;
 }

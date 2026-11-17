@@ -15,30 +15,35 @@ export function EditorTabs({
   onCloseTab,
 }: Props) {
   return (
-    <div className="h-9 bg-[#0d1117] border-b border-[#30363d] flex items-center overflow-x-auto select-none">
+    <div className="h-9 bg-[#0f0f10] border-b border-white/[0.08] flex items-center overflow-x-auto select-none shrink-0 custom-scrollbar">
       {openFiles.map((file) => {
         const isActive = file.id === activeFileId;
         return (
           <div
             key={file.id}
+            role="tab"
+            aria-selected={isActive}
             onClick={() => onSelectTab(file.id)}
-            className={`h-full flex items-center gap-2 px-3 text-xs border-r border-[#30363d] cursor-pointer transition ${
+            className={`h-full flex items-center gap-2 px-3 text-xs cursor-pointer border-r transition-colors duration-150 ${
               isActive
-                ? 'bg-[#161b22] text-[#e6edf3] border-t-2 border-t-sky-400'
-                : 'bg-[#0d1117] text-[#8b949e] hover:bg-[#161b22]/60 hover:text-[#c9d1d9]'
+                ? 'bg-[#141415] text-[#ededed] border-r-white/[0.08] font-medium'
+                : 'bg-[#0f0f10] text-[#85858b] border-r-white/[0.05] hover:text-[#a1a1a6] hover:bg-[#141415]/50'
             }`}
           >
-            <FileCode2 className="w-3.5 h-3.5 text-sky-400 shrink-0" />
-            <span className="truncate max-w-36">{file.name}</span>
+            <FileCode2 className="w-3.5 h-3.5 text-[#85858b] shrink-0 stroke-[1.5]" />
+            <span className="font-mono text-[12px] truncate max-w-[140px]">
+              {file.name}
+            </span>
             <button
+              type="button"
               onClick={(e) => {
                 e.stopPropagation();
                 onCloseTab(file.id);
               }}
-              className="p-0.5 rounded hover:bg-[#30363d] text-[#8b949e] hover:text-white cursor-pointer"
-              title="Close tab"
+              className="p-0.5 rounded-[3px] text-[#85858b] hover:text-[#ededed] hover:bg-white/[0.08] cursor-pointer transition-colors duration-100"
+              title={`Close ${file.name}`}
             >
-              <X className="w-3 h-3" />
+              <X className="w-3 h-3 stroke-[1.5]" />
             </button>
           </div>
         );

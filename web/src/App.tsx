@@ -52,7 +52,7 @@ export default function App() {
     setFailureCount(0);
     setLogs((prev) => [
       ...prev,
-      '\x1b[33m[Reset]\x1b[0m Workspace files restored to initial challenge state.',
+      '\x1b[90mWorkspace files restored to initial scenario state\x1b[0m',
     ]);
   };
 
@@ -65,7 +65,7 @@ export default function App() {
       setLogs((prev) => [
         ...prev,
         '',
-        `\x1b[33m[Notice]\x1b[0m ${targetFile.name} is a documentation file and cannot be executed directly. Please select a code file.`,
+        `\x1b[33m[notice]\x1b[0m ${targetFile.name} is documentation and cannot be executed directly`,
       ]);
       return;
     }
@@ -75,40 +75,39 @@ export default function App() {
     setLogs((prev) => [
       ...prev,
       '',
-      `\x1b[36m→ Executing ${targetFile.name} (${targetFile.language}) in container sandbox...\x1b[0m`,
-      '\x1b[90m--------------------------------------------------\x1b[0m',
+      `\x1b[90m$ run ${targetFile.name} (${targetFile.language})\x1b[0m`,
     ]);
 
     try {
       const result = await executeSingleFile(targetFile);
 
       if (result.stdout) {
-        setLogs((prev) => [...prev, result.stdout]);
+        setLogs((prev) => [...prev, result.stdout.trimEnd()]);
       }
       if (result.stderr) {
-        setLogs((prev) => [...prev, `\x1b[31m${result.stderr}\x1b[0m`]);
+        setLogs((prev) => [...prev, `\x1b[31m${result.stderr.trimEnd()}\x1b[0m`]);
       }
 
       if (result.success) {
         setFailureCount(0);
         setLogs((prev) => [
           ...prev,
-          `\x1b[32m✓ Finished: ${targetFile.name}\x1b[0m (exit code: ${result.exitCode}, time: ${result.executionTimeMs}ms, memory: ${result.memoryMb.toFixed(1)}MB)`,
+          `\x1b[32mProcess completed in ${result.executionTimeMs}ms\x1b[0m \x1b[90m(exit code: 0, memory: ${result.memoryMb.toFixed(1)}MB)\x1b[0m`,
         ]);
       } else {
         setFailureCount((c) => c + 1);
         setLogs((prev) => [
           ...prev,
-          `\x1b[31m✗ Failed: ${targetFile.name}\x1b[0m (exit code: ${result.exitCode}, time: ${result.executionTimeMs}ms, memory: ${result.memoryMb.toFixed(1)}MB)`,
+          `\x1b[31mProcess exited with code ${result.exitCode}\x1b[0m \x1b[90m(${result.executionTimeMs}ms, memory: ${result.memoryMb.toFixed(1)}MB)\x1b[0m`,
         ]);
       }
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Unknown execution error';
+      const message = err instanceof Error ? err.message : 'Execution failed';
       setFailureCount((c) => c + 1);
       setLogs((prev) => [
         ...prev,
         `\x1b[31m${message}\x1b[0m`,
-        `\x1b[31m✗ Execution failed (exit code: 1, time: 0ms, memory: 0.0MB)\x1b[0m`,
+        `\x1b[31mProcess terminated with code 1\x1b[0m`,
       ]);
     } finally {
       setIsRunning(false);
@@ -116,7 +115,7 @@ export default function App() {
   };
 
   return (
-    <div className="flex flex-col h-screen w-screen bg-[#0d1117] text-[#e6edf3]">
+    <div className="flex flex-col h-screen w-screen bg-[#0f0f10] text-[#ededed] overflow-hidden">
       <EditorToolbar
         activeFile={activeFile || files[0]}
         isRunning={isRunning}
@@ -131,7 +130,7 @@ export default function App() {
           onSelectFile={handleSelectFile}
         />
 
-        <div className="flex-1 flex flex-col bg-[#0d1117] overflow-hidden">
+        <div className="flex-1 flex flex-col bg-[#141415] overflow-hidden">
           <main className="flex-1 flex flex-col overflow-hidden">
             <EditorTabs
               openFiles={openFiles}
@@ -143,8 +142,8 @@ export default function App() {
             {activeFile ? (
               <CodeEditor file={activeFile} onChange={handleCodeChange} />
             ) : (
-              <div className="flex-1 flex items-center justify-center text-sm text-[#8b949e]">
-                Select a file from the DebugLabs Explorer to start debugging
+              <div className="flex-1 flex items-center justify-center text-xs font-mono text-[#85858b]">
+                Select a file from the explorer to begin editing
               </div>
             )}
           </main>
