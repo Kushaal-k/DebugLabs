@@ -10,9 +10,14 @@ import {
   Check,
   ChevronDown,
   ChevronUp,
+  FlaskConical,
+  ListChecks,
 } from 'lucide-react';
+import type { DsaTestCase, DsaRunSummary } from '../../types/dsa';
+import { TestCaseTab } from '../dsa/TestCaseTab';
+import { TestResultTab } from '../dsa/TestResultTab';
 
-export type BottomPanelTab = 'output' | 'terminal';
+export type BottomPanelTab = 'testcases' | 'results' | 'output' | 'terminal';
 
 interface Props {
   logs: string[];
@@ -21,6 +26,14 @@ interface Props {
   activeTab?: BottomPanelTab;
   onTabChange?: (tab: BottomPanelTab) => void;
   onClear: () => void;
+  // DSA test case properties
+  testCases?: DsaTestCase[];
+  onUpdateTestCase?: (testCase: DsaTestCase) => void;
+  onAddTestCase?: () => void;
+  onRemoveTestCase?: (id: string) => void;
+  onRunTestCases?: () => void;
+  dsaRunSummary?: DsaRunSummary | null;
+  isDsaRunning?: boolean;
 }
 
 const XTERM_THEME = {
@@ -54,8 +67,15 @@ export function OutputTerminal({
   activeTab: controlledTab,
   onTabChange,
   onClear,
+  testCases = [],
+  onUpdateTestCase,
+  onAddTestCase,
+  onRemoveTestCase,
+  onRunTestCases,
+  dsaRunSummary = null,
+  isDsaRunning = false,
 }: Props) {
-  const [internalTab, setInternalTab] = useState<BottomPanelTab>('output');
+  const [internalTab, setInternalTab] = useState<BottomPanelTab>('testcases');
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [copied, setCopied] = useState(false);
 
@@ -212,7 +232,7 @@ export function OutputTerminal({
     const timer = setTimeout(() => {
       if (currentTab === 'output') {
         outputFitRef.current?.fit();
-      } else {
+      } else if (currentTab === 'terminal') {
         terminalFitRef.current?.fit();
       }
     }, 40);
@@ -227,7 +247,7 @@ export function OutputTerminal({
         '\x1b[90mOutput ready. Click "Run" in toolbar to execute active file.\x1b[0m'
       );
       renderedCountRef.current = 0;
-    } else {
+    } else if (currentTab === 'terminal') {
       terminalTermRef.current?.clear();
       terminalTermRef.current?.write('$ ');
     }
@@ -244,8 +264,10 @@ export function OutputTerminal({
                 .join('\n')
             : 'Output is empty.';
         await navigator.clipboard.writeText(textToCopy);
-      } else {
+      } else if (currentTab === 'terminal') {
         await navigator.clipboard.writeText('DebugLabs interactive session');
+      } else if (currentTab === 'results' && dsaRunSummary) {
+        await navigator.clipboard.writeText(JSON.stringify(dsaRunSummary, null, 2));
       }
       setCopied(true);
       setTimeout(() => setCopied(false), 1400);
@@ -257,12 +279,60 @@ export function OutputTerminal({
   return (
     <section
       className={`${
-        isCollapsed ? 'h-9' : 'h-56'
+        isCollapsed ? 'h-9' : 'h-64'
       } bg-[#141415] border-t border-white/[0.08] flex flex-col shrink-0`}
     >
       <div className="h-9 bg-[#0f0f10] border-b border-white/[0.08] flex items-center justify-between text-xs select-none pr-3">
         <div className="flex items-center h-full">
           <div className="flex items-center h-full">
+            {/* Test Cases Tab */}
+            <button
+              type="button"
+              onClick={() => setTab('testcases')}
+              className={`h-full flex items-center gap-2 px-3.5 text-xs border-r cursor-pointer transition-colors duration-150 ${
+                currentTab === 'testcases'
+                  ? 'bg-[#141415] text-[#ededed] border-r-white/[0.08] font-medium'
+                  : 'bg-[#0f0f10] text-[#85858b] border-r-white/[0.05] hover:text-[#ededed] hover:bg-[#141415]/50'
+              }`}
+            >
+              <FlaskConical
+                className={`w-3.5 h-3.5 stroke-[1.5] ${
+                  currentTab === 'testcases' ? 'text-emerald-400' : 'text-[#85858b]'
+                }`}
+              />
+              <span>Test Cases</span>
+            </button>
+
+            {/* Test Result Tab */}
+            <button
+              type="button"
+              onClick={() => setTab('results')}
+              className={`h-full flex items-center gap-2 px-3.5 text-xs border-r cursor-pointer transition-colors duration-150 ${
+                currentTab === 'results'
+                  ? 'bg-[#141415] text-[#ededed] border-r-white/[0.08] font-medium'
+                  : 'bg-[#0f0f10] text-[#85858b] border-r-white/[0.05] hover:text-[#ededed] hover:bg-[#141415]/50'
+              }`}
+            >
+              <ListChecks
+                className={`w-3.5 h-3.5 stroke-[1.5] ${
+                  currentTab === 'results' ? 'text-emerald-400' : 'text-[#85858b]'
+                }`}
+              />
+              <span>Test Result</span>
+              {dsaRunSummary && (
+                <span
+                  className={`text-[10px] px-1 rounded font-mono ${
+                    dsaRunSummary.status === 'passed'
+                      ? 'bg-emerald-500/20 text-emerald-400'
+                      : 'bg-rose-500/20 text-rose-400'
+                  }`}
+                >
+                  {dsaRunSummary.passed}/{dsaRunSummary.total}
+                </span>
+              )}
+            </button>
+
+            {/* Output Tab */}
             <button
               type="button"
               onClick={() => setTab('output')}
@@ -280,6 +350,7 @@ export function OutputTerminal({
               <span>Output</span>
             </button>
 
+            {/* Interactive Terminal Tab */}
             <button
               type="button"
               onClick={() => setTab('terminal')}
@@ -298,16 +369,16 @@ export function OutputTerminal({
             </button>
           </div>
 
-          {failureCount > 0 && (
+          {failureCount > 0 && currentTab === 'output' && (
             <span className="flex items-center gap-1 bg-[#e5484d]/10 text-[#e5484d] border border-[#e5484d]/20 px-1.5 py-0.5 rounded-[3px] text-[11px] font-mono tabular-nums ml-3">
               failed ({failureCount})
             </span>
           )}
 
-          {isRunning && (
+          {(isRunning || isDsaRunning) && (
             <span className="flex items-center gap-1.5 text-xs text-[#a1a1a6] ml-3">
-              <span className="w-1.5 h-1.5 rounded-full bg-amber-400 shrink-0 inline-block" />
-              <span>Running…</span>
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse shrink-0 inline-block" />
+              <span>{isDsaRunning ? 'Evaluating tests...' : 'Running…'}</span>
             </span>
           )}
         </div>
@@ -349,17 +420,40 @@ export function OutputTerminal({
       </div>
 
       <div
-        className={`flex-1 px-3 py-2.5 overflow-hidden relative ${
+        className={`flex-1 overflow-hidden relative ${
           isCollapsed ? 'hidden' : 'block'
         }`}
       >
+        {/* Test Cases View */}
+        {currentTab === 'testcases' && onUpdateTestCase && onAddTestCase && onRemoveTestCase && onRunTestCases && (
+          <TestCaseTab
+            testCases={testCases}
+            onUpdateTestCase={onUpdateTestCase}
+            onAddTestCase={onAddTestCase}
+            onRemoveTestCase={onRemoveTestCase}
+            onRunTestCases={onRunTestCases}
+            isRunning={isDsaRunning}
+          />
+        )}
+
+        {/* Test Results View */}
+        {currentTab === 'results' && (
+          <TestResultTab
+            runSummary={dsaRunSummary}
+            isRunning={isDsaRunning}
+          />
+        )}
+
+        {/* Output Xterm Container */}
         <div
           ref={outputContainerRef}
-          className={`h-full w-full ${currentTab === 'output' ? 'block' : 'hidden'}`}
+          className={`h-full w-full px-3 py-2.5 ${currentTab === 'output' ? 'block' : 'hidden'}`}
         />
+
+        {/* Terminal Xterm Container */}
         <div
           ref={terminalContainerRef}
-          className={`h-full w-full ${currentTab === 'terminal' ? 'block' : 'hidden'}`}
+          className={`h-full w-full px-3 py-2.5 ${currentTab === 'terminal' ? 'block' : 'hidden'}`}
         />
       </div>
     </section>
