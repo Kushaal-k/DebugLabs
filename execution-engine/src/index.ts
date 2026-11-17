@@ -21,7 +21,7 @@ app.get("/health", (_req, res) => {
 app.post("/execute", async (req, res) => {
   const payload: ExecutionPayload = req.body;
 
-  if (!payload.code || !payload.language) {
+  if(!payload.code || !payload.language) {
     return res.status(400).json({ error: "Missing required fields: code and language" });
   }
 
@@ -32,7 +32,7 @@ app.post("/execute", async (req, res) => {
     console.error(`[execution engine] Error executing code: ${error}`);
     res.status(500).json({ error: "Internal server error" });
   }
-});
+})
 
 const server = app.listen(port, host, (error) => {
   if (error) {
@@ -46,15 +46,3 @@ const server = app.listen(port, host, (error) => {
     console.log(`Execution engine running at http://${host}:${address.port}`);
   }
 });
-
-const shutdown = () => {
-  try {
-    server.closeAllConnections?.();
-    server.close();
-  } finally {
-    process.exit(0);
-  }
-};
-
-process.once("SIGTERM", shutdown);
-process.once("SIGINT", shutdown);
