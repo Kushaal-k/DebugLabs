@@ -7,6 +7,9 @@ interface ExecutionJobData extends ExecutionPayload {
     id: string;
 }
 
+const redisHost = process.env.REDIS_HOST ?? "127.0.0.1";
+const redisPort = Number(process.env.REDIS_PORT ?? 6379);
+
 export const worker = new Worker<ExecutionJobData>(
     "execution-queue",
     async (job: Job<ExecutionJobData>) => {
@@ -22,12 +25,26 @@ export const worker = new Worker<ExecutionJobData>(
     },
     {
         connection: {
-            host: process.env.REDIS_HOST ?? "localhost",
-            port: Number(process.env.REDIS_PORT ?? 6379),
+            host: redisHost,
+            port: redisPort,
+            password: process.env.REDIS_PASSWORD || undefined,
+            maxRetriesPerRequest: null,
+            retryStrategy(times: number) {
+                return Math.min(times * 1000, 5000);
+            },
         },
         concurrency: 2,
     }
 );
+
+let lastRedisErrorLog = 0;
+worker.on("error", (error) => {
+    const now = Date.now();
+    if (now - lastRedisErrorLog > 8000) {
+        lastRedisErrorLog = now;
+        console.warn(`[engine] Redis connection issue: ${error.message} (Is Redis running on ${redisHost}:${redisPort}?)`);
+    }
+});
 
 worker.on("completed", (job) => {
     console.log(`[Worker] Job ${job.id} completed successfully`);
@@ -36,4 +53,3 @@ worker.on("completed", (job) => {
 worker.on("failed", (job, err) => {
     console.error(`[Worker] Job ${job?.id} failed:`, err);
 });
-
