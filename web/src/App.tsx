@@ -66,9 +66,13 @@ export default function App() {
 
   const handleReset = () => {
     setFiles(DEBUGLABS_SCENARIO_FILES);
-    setTestCases(currentProblem.testCases);
+    setCurrentProblem(DEFAULT_DSA_PROBLEMS[0]);
+    setSelectedLanguage('javascript');
+    setTestCases(DEFAULT_DSA_PROBLEMS[0].testCases);
     setDsaRunSummary(null);
     setFailureCount(0);
+    setActiveFileId('dsa-solution');
+    setOpenTabIds(['dsa-solution', 'server-index', 'problem-md']);
     setLogs((prev) => [
       ...prev,
       '\x1b[90mWorkspace and test cases restored to initial state\x1b[0m',
