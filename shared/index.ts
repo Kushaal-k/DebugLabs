@@ -28,3 +28,120 @@ export interface ExecutionResult {
   memoryUsed: number;
   exitCode: number | null;
 }
+
+/* ========================================================================== */
+/*                              DSA Challenge Types                            */
+/* ========================================================================== */
+
+export type DsaDifficulty = "Easy" | "Medium" | "Hard";
+
+export type DsaVerdictStatus =
+  | "Accepted"
+  | "Wrong Answer"
+  | "Time Limit Exceeded"
+  | "Memory Limit Exceeded"
+  | "Runtime Error"
+  | "Compilation Error"
+  | "Internal Error";
+
+export type DsaRunStatus = "passed" | "failed" | "error";
+
+export interface DsaExample {
+  id: number;
+  input: string;
+  output: string;
+  explanation?: string;
+}
+
+export interface DsaTestCase {
+  id: string;
+  name?: string;
+  input: string;
+  expectedOutput: string;
+  hidden?: boolean;
+  isCustom?: boolean;
+  explanation?: string;
+}
+
+export interface DsaTestCaseResult {
+  testCaseId: string;
+  testCaseName?: string;
+  passed: boolean;
+  actualOutput: string;
+  expectedOutput: string;
+  executionTimeMs: number;
+  memoryUsedKb?: number;
+  errorMessage?: string;
+  hidden?: boolean;
+}
+
+export interface DsaRunSummary {
+  total: number;
+  passed: number;
+  failed: number;
+  executionTimeMs: number;
+  results: DsaTestCaseResult[];
+  status: DsaRunStatus;
+  verdict?: DsaVerdictStatus;
+}
+
+export interface DsaProblem {
+  id: string;
+  title: string;
+  difficulty: DsaDifficulty;
+  category: string;
+  tags: string[];
+  description: string;
+  examples: DsaExample[];
+  constraints: string[];
+  starterCode: Record<SupportedLanguage, string>;
+  testCases: DsaTestCase[];
+  hiddenTestCases?: DsaTestCase[];
+  timeLimitMs?: number;
+  memoryLimitMb?: number;
+}
+
+export interface DsaProblemSummary {
+  id: string;
+  title: string;
+  difficulty: DsaDifficulty;
+  category: string;
+  tags: string[];
+  solved?: boolean;
+}
+
+export interface LanguageOption {
+  id: SupportedLanguage;
+  name: string;
+  extension: string;
+  version: string;
+  monacoLanguage: string;
+}
+
+/* ========================================================================== */
+/*                       Backend API Payloads & Results                       */
+/* ========================================================================== */
+
+export interface DsaRunRequest {
+  problemId: string;
+  language: SupportedLanguage;
+  code: string;
+  customTestCases?: DsaTestCase[];
+}
+
+export interface DsaVerifyRequest {
+  problemId: string;
+  language: SupportedLanguage;
+  code: string;
+}
+
+export interface DsaSubmissionResult {
+  submissionId: string;
+  problemId: string;
+  status: DsaVerdictStatus;
+  passedCount: number;
+  totalCount: number;
+  executionTimeMs: number;
+  memoryUsedKb?: number;
+  details?: DsaTestCaseResult[];
+}
