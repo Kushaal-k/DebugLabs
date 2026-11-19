@@ -3,12 +3,13 @@ export interface ServiceStatus {
   status: "ok";
 }
 
-export type SUPPORTED_LANGUAGES = "javascript" | "python" | "java" | "cpp";
+export type SUPPORTED_LANGUAGES = "javascript" | "python" | "java" | "cpp" | "c" | "csharp";
 export type SupportedLanguage = SUPPORTED_LANGUAGES;
 
 export interface ExecutionFile {
   path: string;
   content: string;
+  readOnly?: boolean;
 }
 
 export interface ExecutionPayload {
@@ -28,10 +29,6 @@ export interface ExecutionResult {
   memoryUsed: number;
   exitCode: number | null;
 }
-
-/* ========================================================================== */
-/*                              DSA Challenge Types                            */
-/* ========================================================================== */
 
 export type DsaDifficulty = "Easy" | "Medium" | "Hard";
 
@@ -92,9 +89,11 @@ export interface DsaProblem {
   category: string;
   tags: string[];
   description: string;
+  bugDescription?: string;
+  hints?: string[];
   examples: DsaExample[];
   constraints: string[];
-  starterCode: Record<SupportedLanguage, string>;
+  starterCode: Partial<Record<SupportedLanguage, string>>;
   testCases: DsaTestCase[];
   hiddenTestCases?: DsaTestCase[];
   timeLimitMs?: number;
@@ -117,10 +116,6 @@ export interface LanguageOption {
   version: string;
   monacoLanguage: string;
 }
-
-/* ========================================================================== */
-/*                       Backend API Payloads & Results                       */
-/* ========================================================================== */
 
 export interface DsaRunRequest {
   problemId: string;
