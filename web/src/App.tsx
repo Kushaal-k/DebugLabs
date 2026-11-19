@@ -130,6 +130,8 @@ export default function App() {
       python: 'solution.py',
       cpp: 'solution.cpp',
       java: 'Solution.java',
+      c: 'solution.c',
+      csharp: 'Solution.cs',
     };
 
     setFiles((previous) =>

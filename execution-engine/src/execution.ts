@@ -19,6 +19,8 @@ const LANGUAGE_IMAGES: Record<SUPPORTED_LANGUAGES, string> = {
   python: "python:3.12-slim",
   java: "eclipse-temurin:21-jdk",
   cpp: "gcc:14",
+  c: "gcc:14",
+  csharp: "mcr.microsoft.com/dotnet/sdk:8.0-alpine",
 };
 
 const DEFAULT_ENTRYPOINTS: Record<SUPPORTED_LANGUAGES, string> = {
@@ -26,6 +28,8 @@ const DEFAULT_ENTRYPOINTS: Record<SUPPORTED_LANGUAGES, string> = {
   python: "main.py",
   java: "Main.java",
   cpp: "main.cpp",
+  c: "main.c",
+  csharp: "Program.cs",
 };
 
 function sanitizeRelativePath(rawPath: string): string {
