@@ -91,6 +91,7 @@ export interface DsaProblem {
   description: string;
   bugDescription?: string;
   hints?: string[];
+  entrypointMethod?: string;
   examples: DsaExample[];
   constraints: string[];
   starterCode: Partial<Record<SupportedLanguage, string>>;
