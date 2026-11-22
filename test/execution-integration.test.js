@@ -111,7 +111,7 @@ test("execution-engine responds to health and validates execution payload", asyn
   });
   assert.equal(invalidRes.status, 400);
   const invalidJson = await invalidRes.json();
-  assert.equal(invalidJson.error, "Missing required fields: code and language");
+  assert.equal(invalidJson.error, "Missing required fields: code or files, and language");
 
   // Test code execution dispatch via Docker
   const execRes = await fetch(`http://127.0.0.1:${port}/execute`, {

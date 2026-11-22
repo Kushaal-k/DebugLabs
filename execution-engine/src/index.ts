@@ -21,8 +21,8 @@ app.get("/health", (_req, res) => {
 app.post("/execute", async (req, res) => {
   const payload: ExecutionPayload = req.body;
 
-  if(!payload.code || !payload.language) {
-    return res.status(400).json({ error: "Missing required fields: code and language" });
+  if ((!payload.code && (!payload.files || payload.files.length === 0)) || !payload.language) {
+    return res.status(400).json({ error: "Missing required fields: code or files, and language" });
   }
 
   try {
