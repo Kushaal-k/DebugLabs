@@ -1,0 +1,8 @@
+anagram
+nagaram
+===
+rat
+car
+===
+ab
+a

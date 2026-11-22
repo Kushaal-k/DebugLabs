@@ -1,4 +1,7 @@
 import type { DsaProblem } from "@debugLabs/shared";
+import { loadProblemTestCases } from "../testcases/loader.js";
+
+const { testCases, hiddenTestCases } = loadProblemTestCases("two-sum");
 
 export const TWO_SUM_PROBLEM: DsaProblem = {
   id: "two-sum",
@@ -6,156 +9,139 @@ export const TWO_SUM_PROBLEM: DsaProblem = {
   difficulty: "Easy",
   category: "Arrays & Hashing",
   tags: ["Array", "Hash Table", "Debugging"],
-  description: `Given an array of integers \`nums\` and an integer \`target\`, return indices of the two numbers such that they add up to \`target\`.
+  entrypointMethod: "twoSum",
+  description: `Given an array of integers \`nums\` and an integer \`target\`, find the 0-based indices of the two numbers such that they add up to \`target\`.
 
-You may assume that each input would have **exactly one solution**, and you may not use the same element twice.
+**Input Format:**
+- Line 1: \`n target\`
+- Line 2: \`n\` integers separated by spaces
 
-Return the answer in standard 0-based indices in any order.`,
+**Output Format:**
+- Print the two 0-based indices separated by a space.`,
   bugDescription:
-    "The author attempted to convert from legacy 1-based indexing notation by adding `+ 1` to indices before returning, returning 1-based indices instead of standard 0-based indices.",
+    "The author used 1-based indexing instead of 0-based indexing by adding +1 to indices.",
   hints: [
     "Array indices in modern programming languages are 0-based.",
-    "Notice the `+ 1` added to the returned indices.",
-    "Return the indices directly without the offset.",
+    "Notice the + 1 added when returning or printing the indices.",
   ],
   examples: [
     {
       id: 1,
-      input: "nums = [2, 7, 11, 15], target = 9",
-      output: "[0, 1]",
-      explanation: "Because nums[0] + nums[1] == 9, we return [0, 1].",
+      input: "4 9\n2 7 11 15",
+      output: "0 1",
+      explanation: "nums[0] + nums[1] = 2 + 7 = 9",
     },
     {
       id: 2,
-      input: "nums = [3, 2, 4], target = 6",
-      output: "[1, 2]",
-      explanation: "Because nums[1] + nums[2] == 6, we return [1, 2].",
-    },
-    {
-      id: 3,
-      input: "nums = [3, 3], target = 6",
-      output: "[0, 1]",
-      explanation: "Because nums[0] + nums[1] == 6, we return [0, 1].",
+      input: "3 6\n3 2 4",
+      output: "1 2",
     },
   ],
   constraints: [
-    "2 <= nums.length <= 10^4",
+    "2 <= n <= 10^4",
     "-10^9 <= nums[i] <= 10^9",
     "-10^9 <= target <= 10^9",
-    "Only one valid answer exists.",
+    "Exactly one valid solution exists.",
   ],
   starterCode: {
-    javascript: `/**
- * @param {number[]} nums
- * @param {number} target
- * @return {number[]}
- */
-function twoSum(nums, target) {
+    javascript: `import fs from "node:fs";
+
+function main() {
+  const input = fs.readFileSync(0, "utf-8").trim().split(/\\s+/);
+  if (!input[0]) return;
+  const n = parseInt(input[0], 10);
+  const target = parseInt(input[1], 10);
+  const nums = input.slice(2, 2 + n).map(Number);
+
   const seen = new Map();
   for (let i = 0; i < nums.length; i++) {
     const complement = target - nums[i];
     if (seen.has(complement)) {
-      // BUG: Returns 1-based indices instead of standard 0-based!
-      return [seen.get(complement) + 1, i + 1];
+      // BUG: 1-based indexing instead of 0-based!
+      console.log(\`\${seen.get(complement) + 1} \${i + 1}\`);
+      return;
     }
     seen.set(nums[i], i);
   }
-  return [];
 }
-`,
-    python: `from typing import List
 
-class Solution:
-    def twoSum(self, nums: List[int], target: int) -> List[int]:
-        seen = {}
-        for i, num in enumerate(nums):
-            complement = target - num
-            if complement in seen:
-                # BUG: Returns 1-based indices instead of 0-based!
-                return [seen[complement] + 1, i + 1]
-            seen[num] = i
-        return []
+main();
 `,
-    cpp: `#include <vector>
+    python: `import sys
+
+def main():
+    input_data = sys.stdin.read().split()
+    if not input_data:
+        return
+    n = int(input_data[0])
+    target = int(input_data[1])
+    nums = [int(x) for x in input_data[2:2 + n]]
+
+    seen = {}
+    for i, num in enumerate(nums):
+        complement = target - num
+        if complement in seen:
+            # BUG: 1-based indexing instead of 0-based!
+            print(f"{seen[complement] + 1} {i + 1}")
+            return
+        seen[num] = i
+
+if __name__ == "__main__":
+    main()
+`,
+    cpp: `#include <iostream>
+#include <vector>
 #include <unordered_map>
 using namespace std;
 
-class Solution {
-public:
-    vector<int> twoSum(vector<int>& nums, int target) {
-        unordered_map<int, int> seen;
-        for (int i = 0; i < (int)nums.size(); i++) {
-            int complement = target - nums[i];
-            if (seen.find(complement) != seen.end()) {
-                // BUG: Returns 1-based indices instead of 0-based!
-                return {seen[complement] + 1, i + 1};
-            }
-            seen[nums[i]] = i;
-        }
-        return {};
-    }
-};
-`,
-    java: `import java.util.HashMap;
-import java.util.Map;
+int main() {
+    int n, target;
+    if (!(cin >> n >> target)) return 0;
+    vector<int> nums(n);
+    for (int i = 0; i < n; i++) cin >> nums[i];
 
-class Solution {
-    public int[] twoSum(int[] nums, int target) {
+    unordered_map<int, int> seen;
+    for (int i = 0; i < n; i++) {
+        int complement = target - nums[i];
+        if (seen.count(complement)) {
+            // BUG: 1-based indexing instead of 0-based!
+            cout << seen[complement] + 1 << " " << i + 1 << "\\n";
+            return 0;
+        }
+        seen[nums[i]] = i;
+    }
+    return 0;
+}
+`,
+    java: `import java.util.*;
+
+public class Main {
+    public static void main(String[] args) {
+        Scanner sc = new Scanner(System.in);
+        if (!sc.hasNextInt()) return;
+        int n = sc.nextInt();
+        int target = sc.nextInt();
+        int[] nums = new int[n];
+        for (int i = 0; i < n; i++) {
+            nums[i] = sc.nextInt();
+        }
+
         Map<Integer, Integer> seen = new HashMap<>();
-        for (int i = 0; i < nums.length; i++) {
+        for (int i = 0; i < n; i++) {
             int complement = target - nums[i];
             if (seen.containsKey(complement)) {
-                // BUG: Returns 1-based indices instead of 0-based!
-                return new int[] { seen.get(complement) + 1, i + 1 };
+                // BUG: 1-based indexing instead of 0-based!
+                System.out.println((seen.get(complement) + 1) + " " + (i + 1));
+                return;
             }
             seen.put(nums[i], i);
         }
-        return new int[0];
     }
 }
 `,
   },
-  testCases: [
-    {
-      id: "tc-1",
-      name: "Case 1",
-      input: "nums = [2, 7, 11, 15], target = 9",
-      expectedOutput: "[0, 1]",
-    },
-    {
-      id: "tc-2",
-      name: "Case 2",
-      input: "nums = [3, 2, 4], target = 6",
-      expectedOutput: "[1, 2]",
-    },
-    {
-      id: "tc-3",
-      name: "Case 3",
-      input: "nums = [3, 3], target = 6",
-      expectedOutput: "[0, 1]",
-    },
-  ],
-  hiddenTestCases: [
-    {
-      id: "htc-1",
-      name: "Hidden Case 1",
-      input: "nums = [1, 2, 3, 9], target = 10",
-      expectedOutput: "[0, 3]",
-      hidden: true,
-    },
-    {
-      id: "htc-2",
-      name: "Hidden Case 2",
-      input: "nums = [0, 4, 3, 0], target = 0",
-      expectedOutput: "[0, 3]",
-      hidden: true,
-    },
-    {
-      id: "htc-3",
-      name: "Hidden Case 3",
-      input: "nums = [-3, 4, 3, 90], target = 0",
-      expectedOutput: "[0, 2]",
-      hidden: true,
-    },
-  ],
+  testCases,
+  hiddenTestCases,
+  timeLimitMs: 2000,
+  memoryLimitMb: 256,
 };

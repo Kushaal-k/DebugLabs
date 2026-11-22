@@ -2,6 +2,7 @@ import type { DsaProblem, DsaProblemSummary } from "@debugLabs/shared";
 import { DSA_PROBLEMS } from "./problems/index.js";
 
 export * from "./problems/index.js";
+export * from "./harness.js";
 
 /**
  * Returns a list of problem summaries for list/dashboard view.

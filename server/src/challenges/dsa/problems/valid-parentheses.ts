@@ -1,4 +1,7 @@
 import type { DsaProblem } from "@debugLabs/shared";
+import { loadProblemTestCases } from "../testcases/loader.js";
+
+const { testCases, hiddenTestCases } = loadProblemTestCases("valid-parentheses");
 
 export const VALID_PARENTHESES_PROBLEM: DsaProblem = {
   id: "valid-parentheses",
@@ -6,14 +9,16 @@ export const VALID_PARENTHESES_PROBLEM: DsaProblem = {
   difficulty: "Easy",
   category: "Stack",
   tags: ["String", "Stack", "Debugging"],
+  entrypointMethod: "isValid",
   description: `Given a string \`s\` containing just the characters \`'('\`, \`')'\`, \`'{'\`, \`'}'\`, \`'['\` and \`']'\`, determine if the input string is valid.
 
-An input string is valid if:
-1. Open brackets must be closed by the same type of brackets.
-2. Open brackets must be closed in the correct order.
-3. Every close bracket has a corresponding open bracket of the same type.`,
+**Input Format:**
+- Line 1: string \`s\`
+
+**Output Format:**
+- Print \`true\` or \`false\`.`,
   bugDescription:
-    "When a closing bracket arrives while the stack is empty, the logic attempts to pop without checking if the stack has elements, causing runtime crashes or returning incorrect boolean values.",
+    "The code fails to verify that the stack is completely empty at the end, returning true even if unmatched opening brackets remain.",
   hints: [
     "Always check whether the stack is non-empty before attempting to pop.",
     "At the end of string traversal, make sure the stack is completely empty (`stack.length === 0`).",
@@ -21,17 +26,17 @@ An input string is valid if:
   examples: [
     {
       id: 1,
-      input: 's = "()"',
+      input: "()",
       output: "true",
     },
     {
       id: 2,
-      input: 's = "()[]{}"',
+      input: "()[]{}",
       output: "true",
     },
     {
       id: 3,
-      input: 's = "(]"',
+      input: "(]",
       output: "false",
     },
   ],
@@ -40,143 +45,150 @@ An input string is valid if:
     "s consists of parentheses only '()[]{}'.",
   ],
   starterCode: {
-    javascript: `/**
- * @param {string} s
- * @return {boolean}
- */
-function isValid(s) {
-  const map = { ")": "(", "}": "{", "]": "[" };
-  const stack = [];
+    javascript: `import fs from "node:fs";
 
-  for (const char of s) {
-    if (map[char]) {
-      // BUG: Pops without checking if stack is empty, resulting in undefined comparison!
+function main() {
+  const s = fs.readFileSync(0, "utf-8").trim();
+  if (!s) {
+    console.log("true");
+    return;
+  }
+
+  const stack = [];
+  const map = { ")": "(", "}": "{", "]": "[" };
+  let ok = true;
+
+  for (let i = 0; i < s.length; i++) {
+    const c = s[i];
+    if (map[c]) {
+      if (stack.length === 0) {
+        ok = false;
+        break;
+      }
       const top = stack.pop();
-      if (top !== map[char]) {
-        return false;
+      if (top !== map[c]) {
+        ok = false;
+        break;
       }
     } else {
-      stack.push(char);
+      stack.push(c);
     }
   }
 
-  // BUG: Forgot to check if unclosed open brackets remain in the stack!
-  return true;
+  // BUG: Forgot to check if stack is empty at the end!
+  console.log(ok ? "true" : "false");
 }
-`,
-    python: `class Solution:
-    def isValid(self, s: str) -> bool:
-        pairs = {")": "(", "}": "{", "]": "["}
-        stack = []
 
-        for char in s:
-            if char in pairs:
-                # BUG: Pops without checking if stack is empty! Raises IndexError on leading close bracket
-                top = stack.pop()
-                if top != pairs[char]:
-                    return False
-            else:
-                stack.append(char)
-
-        # BUG: Forgot to ensure all brackets were closed!
-        return True
+main();
 `,
-    cpp: `#include <string>
+    python: `import sys
+
+def main():
+    s = sys.stdin.read().strip()
+    if not s:
+        print("true")
+        return
+
+    stack = []
+    mapping = {")": "(", "}": "{", "]": "["}
+    ok = True
+
+    for c in s:
+        if c in mapping:
+            if not stack:
+                ok = False
+                break
+            top = stack.pop()
+            if top != mapping[c]:
+                ok = False
+                break
+        else:
+            stack.append(c)
+
+    # BUG: Forgot to check if stack is empty at the end!
+    print("true" if ok else "false")
+
+if __name__ == "__main__":
+    main()
+`,
+    cpp: `#include <iostream>
+#include <string>
 #include <stack>
 using namespace std;
 
-class Solution {
-public:
-    bool isValid(string s) {
-        stack<char> st;
+int main() {
+    string s;
+    if (!(cin >> s)) {
+        cout << "true\\n";
+        return 0;
+    }
 
-        for (char c : s) {
-            if (c == ')' || c == '}' || c == ']') {
-                // BUG: Calling top() or pop() on empty stack triggers undefined behavior / crash!
-                char top = st.top();
-                st.pop();
-                if ((c == ')' && top != '(') ||
-                    (c == '}' && top != '{') ||
-                    (c == ']' && top != '[')) {
-                    return false;
-                }
-            } else {
-                st.push(c);
+    stack<char> st;
+    bool ok = true;
+    for (char c : s) {
+        if (c == '(' || c == '{' || c == '[') {
+            st.push(c);
+        } else {
+            if (st.empty()) {
+                ok = false;
+                break;
+            }
+            char top = st.top();
+            st.pop();
+            if ((c == ')' && top != '(') ||
+                (c == '}' && top != '{') ||
+                (c == ']' && top != '[')) {
+                ok = false;
+                break;
             }
         }
-
-        // BUG: Misses checking if unclosed brackets remain!
-        return true;
     }
-};
+
+    // BUG: Forgot to check if stack is empty at the end!
+    cout << (ok ? "true" : "false") << "\\n";
+    return 0;
+}
 `,
-    java: `import java.util.Stack;
+    java: `import java.util.*;
 
-class Solution {
-    public boolean isValid(String s) {
-        Stack<Character> stack = new Stack<>();
+public class Main {
+    public static void main(String[] args) {
+        Scanner sc = new Scanner(System.in);
+        if (!sc.hasNext()) {
+            System.out.println("true");
+            return;
+        }
+        String s = sc.next();
+        Deque<Character> stack = new ArrayDeque<>();
+        boolean ok = true;
 
-        for (char c : s.toCharArray()) {
-            if (c == ')' || c == '}' || c == ']') {
-                // BUG: Calling pop() on an empty stack throws EmptyStackException!
+        for (int i = 0; i < s.length(); i++) {
+            char c = s.charAt(i);
+            if (c == '(' || c == '{' || c == '[') {
+                stack.push(c);
+            } else {
+                if (stack.isEmpty()) {
+                    ok = false;
+                    break;
+                }
                 char top = stack.pop();
                 if ((c == ')' && top != '(') ||
                     (c == '}' && top != '{') ||
                     (c == ']' && top != '[')) {
-                    return false;
+                    ok = false;
+                    break;
                 }
-            } else {
-                stack.push(c);
             }
         }
 
-        // BUG: Forgot to check if stack is empty!
-        return true;
+        // BUG: Forgot to check if stack is empty at the end!
+        System.out.println(ok ? "true" : "false");
     }
 }
 `,
   },
-  testCases: [
-    {
-      id: "tc-1",
-      name: "Case 1",
-      input: 's = "()"',
-      expectedOutput: "true",
-    },
-    {
-      id: "tc-2",
-      name: "Case 2",
-      input: 's = "()[]{}"',
-      expectedOutput: "true",
-    },
-    {
-      id: "tc-3",
-      name: "Case 3",
-      input: 's = "(]"',
-      expectedOutput: "false",
-    },
-  ],
-  hiddenTestCases: [
-    {
-      id: "htc-1",
-      name: "Hidden Case 1",
-      input: 's = "]"',
-      expectedOutput: "false",
-      hidden: true,
-    },
-    {
-      id: "htc-2",
-      name: "Hidden Case 2",
-      input: 's = "{[]}"',
-      expectedOutput: "true",
-      hidden: true,
-    },
-    {
-      id: "htc-3",
-      name: "Hidden Case 3",
-      input: 's = "([)]"',
-      expectedOutput: "false",
-      hidden: true,
-    },
-  ],
+  testCases,
+  hiddenTestCases,
+  timeLimitMs: 2000,
+  memoryLimitMb: 256,
 };
