@@ -1,4 +1,7 @@
 import type { DsaProblem } from "@debugLabs/shared";
+import { loadProblemTestCases } from "../testcases/loader.js";
+
+const { testCases, hiddenTestCases } = loadProblemTestCases("valid-anagram");
 
 export const VALID_ANAGRAM_PROBLEM: DsaProblem = {
   id: "valid-anagram",
@@ -6,27 +9,31 @@ export const VALID_ANAGRAM_PROBLEM: DsaProblem = {
   difficulty: "Easy",
   category: "Strings & Hashing",
   tags: ["String", "Hash Table", "Debugging"],
+  entrypointMethod: "isAnagram",
   description: `Given two strings \`s\` and \`t\`, return \`true\` if \`t\` is an anagram of \`s\`, and \`false\` otherwise.
 
-An **Anagram** is a word or phrase formed by rearranging the letters of a different word or phrase, typically using all the original letters exactly once.`,
+**Input Format:**
+- Line 1: string \`s\`
+- Line 2: string \`t\`
+
+**Output Format:**
+- Print \`true\` or \`false\`.`,
   bugDescription:
-    "The solution fails to verify that the string lengths are equal before counting frequencies, causing prefix and subset strings of different lengths to be mistakenly treated as valid anagrams.",
+    "The solution fails to verify that the string lengths are equal before counting frequencies, causing prefix strings to be mistakenly treated as valid anagrams.",
   hints: [
     "An anagram must use all original letters exactly once; therefore, `s.length` must strictly equal `t.length`.",
-    "Verify string lengths at the very start of the function.",
+    "Verify string lengths at the very start.",
   ],
   examples: [
     {
       id: 1,
-      input: 's = "anagram", t = "nagaram"',
+      input: "anagram\nnagaram",
       output: "true",
-      explanation: "Both strings have the same characters with identical frequencies.",
     },
     {
       id: 2,
-      input: 's = "rat", t = "car"',
+      input: "rat\ncar",
       output: "false",
-      explanation: '"c" is present in t but not in s.',
     },
   ],
   constraints: [
@@ -34,108 +41,113 @@ An **Anagram** is a word or phrase formed by rearranging the letters of a differ
     "s and t consist of lowercase English letters.",
   ],
   starterCode: {
-    javascript: `/**
- * @param {string} s
- * @param {string} t
- * @return {boolean}
- */
-function isAnagram(s, t) {
-  // BUG: Forgot to check if s.length !== t.length!
-  // Causes strings of unequal lengths to pass if t is a subset of s!
-  const count = {};
-  for (const c of s) count[c] = (count[c] || 0) + 1;
+    javascript: `import fs from "node:fs";
+
+function main() {
+  const words = fs.readFileSync(0, "utf-8").trim().split(/\\s+/);
+  if (words.length < 2) return;
+  const [s, t] = words;
+
+  // BUG: Missing length check! If s and t have different lengths, false positives occur
+  // if (s.length !== t.length) { console.log("false"); return; }
+
+  const counts = {};
+  for (const c of s) counts[c] = (counts[c] || 0) + 1;
   for (const c of t) {
-    if (!count[c]) return false;
-    count[c]--;
+    if (!counts[c]) {
+      console.log("false");
+      return;
+    }
+    counts[c]--;
   }
 
-  return true;
+  console.log("true");
 }
-`,
-    python: `class Solution:
-    def isAnagram(self, s: str, t: str) -> bool:
-        # BUG: Forgot to check if len(s) != len(t)!
-        count = {}
-        for c in s:
-            count[c] = count.get(c, 0) + 1
-        for c in t:
-            if c not in count or count[c] == 0:
-                return False
-            count[c] -= 1
 
-        return True
+main();
 `,
-    cpp: `#include <string>
-#include <vector>
+    python: `import sys
+
+def main():
+    words = sys.stdin.read().split()
+    if len(words) < 2:
+        return
+    s, t = words[0], words[1]
+
+    # BUG: Missing length check! If s and t have different lengths, false positives occur
+    # if len(s) != len(t):
+    #     print("false")
+    #     return
+
+    counts = {}
+    for c in s:
+        counts[c] = counts.get(c, 0) + 1
+    for c in t:
+        if c not in counts or counts[c] == 0:
+            print("false")
+            return
+        counts[c] -= 1
+
+    print("true")
+
+if __name__ == "__main__":
+    main()
+`,
+    cpp: `#include <iostream>
+#include <string>
+#include <unordered_map>
 using namespace std;
 
-class Solution {
-public:
-    bool isAnagram(string s, string t) {
-        // BUG: Forgot length equality check!
-        vector<int> counts(26, 0);
-        for (char c : s) counts[c - 'a']++;
-        for (char c : t) {
-            if (--counts[c - 'a'] < 0) return false;
+int main() {
+    string s, t;
+    if (!(cin >> s >> t)) return 0;
+
+    // BUG: Missing length check! If s and t have different lengths, false positives occur
+    // if (s.length() != t.length()) { cout << "false\\n"; return 0; }
+
+    unordered_map<char, int> counts;
+    for (char c : s) counts[c]++;
+    for (char c : t) {
+        if (!counts.count(c) || counts[c] == 0) {
+            cout << "false\\n";
+            return 0;
         }
-        return true;
+        counts[c]--;
     }
-};
+    cout << "true\\n";
+    return 0;
+}
 `,
-    java: `class Solution {
-    public boolean isAnagram(String s, String t) {
-        // BUG: Forgot length equality check!
-        int[] counts = new int[26];
-        for (char c : s.toCharArray()) counts[c - 'a']++;
+    java: `import java.util.*;
+
+public class Main {
+    public static void main(String[] args) {
+        Scanner sc = new Scanner(System.in);
+        if (!sc.hasNext()) return;
+        String s = sc.next();
+        if (!sc.hasNext()) return;
+        String t = sc.next();
+
+        // BUG: Missing length check!
+        // if (s.length() != t.length()) { System.out.println("false"); return; }
+
+        Map<Character, Integer> counts = new HashMap<>();
+        for (char c : s.toCharArray()) counts.put(c, counts.getOrDefault(c, 0) + 1);
         for (char c : t.toCharArray()) {
-            if (--counts[c - 'a'] < 0) return false;
+            if (!counts.containsKey(c) || counts.get(c) == 0) {
+                System.out.println("false");
+                return;
+            }
+            counts.put(c, counts.get(c) - 1);
         }
-        return true;
+
+        System.out.println("true");
     }
 }
 `,
   },
-  testCases: [
-    {
-      id: "tc-1",
-      name: "Case 1",
-      input: 's = "anagram", t = "nagaram"',
-      expectedOutput: "true",
-    },
-    {
-      id: "tc-2",
-      name: "Case 2",
-      input: 's = "rat", t = "car"',
-      expectedOutput: "false",
-    },
-    {
-      id: "tc-3",
-      name: "Case 3",
-      input: 's = "ab", t = "a"',
-      expectedOutput: "false",
-    },
-  ],
-  hiddenTestCases: [
-    {
-      id: "htc-1",
-      name: "Hidden Case 1",
-      input: 's = "a", t = "a"',
-      expectedOutput: "true",
-      hidden: true,
-    },
-    {
-      id: "htc-2",
-      name: "Hidden Case 2",
-      input: 's = "a", t = "b"',
-      expectedOutput: "false",
-      hidden: true,
-    },
-    {
-      id: "htc-3",
-      name: "Hidden Case 3",
-      input: 's = "aa", t = "a"',
-      expectedOutput: "false",
-      hidden: true,
-    },
-  ],
+  testCases,
+  hiddenTestCases,
+  timeLimitMs: 2000,
+  memoryLimitMb: 256,
 };

@@ -1,4 +1,7 @@
 import type { DsaProblem } from "@debugLabs/shared";
+import { loadProblemTestCases } from "../testcases/loader.js";
+
+const { testCases, hiddenTestCases } = loadProblemTestCases("merge-intervals");
 
 export const MERGE_INTERVALS_PROBLEM: DsaProblem = {
   id: "merge-intervals",
@@ -6,154 +9,173 @@ export const MERGE_INTERVALS_PROBLEM: DsaProblem = {
   difficulty: "Medium",
   category: "Intervals",
   tags: ["Array", "Sorting", "Debugging"],
-  description: `Given an array of \`intervals\` where \`intervals[i] = [start_i, end_i]\`, merge all overlapping intervals, and return an array of the non-overlapping intervals that cover all the intervals in the input.`,
+  entrypointMethod: "merge",
+  description: `Given an array of intervals where each interval has \`[start, end]\`, merge all overlapping intervals, and print each resulting non-overlapping interval.
+
+**Input Format:**
+- Line 1: \`n\`
+- Next \`n\` lines: \`start end\`
+
+**Output Format:**
+- For each merged interval, print \`start end\` on its own line.`,
   bugDescription:
-    "The author iterates through intervals assuming they are already sorted by start time. When unsorted inputs like `[[1, 4], [0, 4]]` are provided, intervals that should merge are wrongly appended as disjoint entries.",
+    "The code iterates through intervals assuming they are already sorted by start time. When unsorted inputs are given, intervals that should merge are wrongly appended as disjoint entries.",
   hints: [
     "Sort the intervals by their start time before merging.",
-    "Compare each interval's start with the end of the last merged interval: if `current.start <= last.end`, update `last.end = max(last.end, current.end)`.",
+    "Compare each interval's start with the end of the last merged interval.",
   ],
   examples: [
     {
       id: 1,
-      input: "intervals = [[1, 3], [2, 6], [8, 10], [15, 18]]",
-      output: "[[1, 6], [8, 10], [15, 18]]",
-      explanation: "Since intervals [1, 3] and [2, 6] overlap, merge them into [1, 6].",
+      input: "4\n1 3\n2 6\n8 10\n15 18",
+      output: "1 6\n8 10\n15 18",
     },
     {
       id: 2,
-      input: "intervals = [[1, 4], [4, 5]]",
-      output: "[[1, 5]]",
-      explanation: "Intervals [1, 4] and [4, 5] are considered overlapping.",
+      input: "2\n1 4\n4 5",
+      output: "1 5",
     },
   ],
   constraints: [
-    "1 <= intervals.length <= 10^4",
-    "intervals[i].length == 2",
-    "0 <= start_i <= end_i <= 10^4",
+    "1 <= n <= 10^4",
+    "0 <= start <= end <= 10^4",
   ],
   starterCode: {
-    javascript: `/**
- * @param {number[][]} intervals
- * @return {number[][]}
- */
-function merge(intervals) {
-  if (intervals.length === 0) return [];
+    javascript: `import fs from "node:fs";
 
-  // BUG: Forgot to sort intervals by start time first! Fails on unsorted inputs!
+function main() {
+  const input = fs.readFileSync(0, "utf-8").trim().split(/\\s+/);
+  if (!input[0]) return;
+  const n = parseInt(input[0], 10);
+  const intervals = [];
+  let idx = 1;
+  for (let i = 0; i < n; i++) {
+    intervals.push([parseInt(input[idx], 10), parseInt(input[idx + 1], 10)]);
+    idx += 2;
+  }
+
+  // BUG: Forgot to sort intervals by start time!
+  // intervals.sort((a, b) => a[0] - b[0]);
+
   const merged = [intervals[0]];
-
   for (let i = 1; i < intervals.length; i++) {
-    const current = intervals[i];
-    const last = merged[merged.length - 1];
-
-    if (current[0] <= last[1]) {
-      last[1] = Math.max(last[1], current[1]);
+    const prev = merged[merged.length - 1];
+    const curr = intervals[i];
+    if (curr[0] <= prev[1]) {
+      prev[1] = Math.max(prev[1], curr[1]);
     } else {
-      merged.push(current);
+      merged.push(curr);
     }
   }
 
-  return merged;
+  for (const [start, end] of merged) {
+    console.log(\`\${start} \${end}\`);
+  }
 }
+
+main();
 `,
-    python: `from typing import List
+    python: `import sys
 
-class Solution:
-    def merge(self, intervals: List[List[int]]) -> List[List[int]]:
-        if not intervals:
-            return []
+def main():
+    input_data = sys.stdin.read().split()
+    if not input_data:
+        return
+    n = int(input_data[0])
+    intervals = []
+    idx = 1
+    for _ in range(n):
+        intervals.append([int(input_data[idx]), int(input_data[idx + 1])])
+        idx += 2
 
-        # BUG: Forgot to sort intervals by start time first!
-        merged = [intervals[0]]
-        for current in intervals[1:]:
-            last = merged[-1]
-            if current[0] <= last[1]:
-                last[1] = max(last[1], current[1])
-            else:
-                merged.append(current)
+    # BUG: Forgot to sort intervals by start time!
+    # intervals.sort(key=lambda x: x[0])
 
-        return merged
+    merged = [intervals[0]]
+    for curr in intervals[1:]:
+        prev = merged[-1]
+        if curr[0] <= prev[1]:
+            prev[1] = max(prev[1], curr[1])
+        else:
+            merged.append(curr)
+
+    for start, end in merged:
+        print(f"{start} {end}")
+
+if __name__ == "__main__":
+    main()
 `,
-    cpp: `#include <vector>
+    cpp: `#include <iostream>
+#include <vector>
 #include <algorithm>
 using namespace std;
 
-class Solution {
-public:
-    vector<vector<int>> merge(vector<vector<int>>& intervals) {
-        if (intervals.empty()) return {};
+int main() {
+    int n;
+    if (!(cin >> n) || n <= 0) return 0;
+    vector<pair<int, int>> intervals(n);
+    for (int i = 0; i < n; i++) {
+        cin >> intervals[i].first >> intervals[i].second;
+    }
 
-        // BUG: Forgot to sort intervals by start time!
-        vector<vector<int>> merged;
-        merged.push_back(intervals[0]);
+    // BUG: Forgot to sort intervals by start time!
+    // sort(intervals.begin(), intervals.end());
 
-        for (size_t i = 1; i < intervals.size(); i++) {
-            auto& last = merged.back();
-            if (intervals[i][0] <= last[1]) {
-                last[1] = max(last[1], intervals[i][1]);
-            } else {
-                merged.push_back(intervals[i]);
-            }
+    vector<pair<int, int>> merged;
+    merged.push_back(intervals[0]);
+    for (int i = 1; i < n; i++) {
+        auto& prev = merged.back();
+        auto curr = intervals[i];
+        if (curr.first <= prev.second) {
+            prev.second = max(prev.second, curr.second);
+        } else {
+            merged.push_back(curr);
+        }
+    }
+
+    for (const auto& p : merged) {
+        cout << p.first << " " << p.second << "\\n";
+    }
+    return 0;
+}
+`,
+    java: `import java.util.*;
+
+public class Main {
+    public static void main(String[] args) {
+        Scanner sc = new Scanner(System.in);
+        if (!sc.hasNextInt()) return;
+        int n = sc.nextInt();
+        int[][] intervals = new int[n][2];
+        for (int i = 0; i < n; i++) {
+            intervals[i][0] = sc.nextInt();
+            intervals[i][1] = sc.nextInt();
         }
 
-        return merged;
-    }
-};
-`,
-    java: `import java.util.ArrayList;
-import java.util.List;
-
-class Solution {
-    public int[][] merge(int[][] intervals) {
-        if (intervals.length == 0) return new int[0][0];
-
         // BUG: Forgot to sort intervals by start time!
+        // Arrays.sort(intervals, (a, b) -> Integer.compare(a[0], b[0]));
+
         List<int[]> merged = new ArrayList<>();
         merged.add(intervals[0]);
-
-        for (int i = 1; i < intervals.length; i++) {
-            int[] last = merged.get(merged.size() - 1);
-            if (intervals[i][0] <= last[1]) {
-                last[1] = Math.max(last[1], intervals[i][1]);
+        for (int i = 1; i < n; i++) {
+            int[] prev = merged.get(merged.size() - 1);
+            int[] curr = intervals[i];
+            if (curr[0] <= prev[1]) {
+                prev[1] = Math.max(prev[1], curr[1]);
             } else {
-                merged.add(intervals[i]);
+                merged.add(curr);
             }
         }
 
-        return merged.toArray(new int[merged.size()][]);
+        for (int[] p : merged) {
+            System.out.println(p[0] + " " + p[1]);
+        }
     }
 }
 `,
   },
-  testCases: [
-    {
-      id: "tc-1",
-      name: "Case 1",
-      input: "intervals = [[1, 3], [2, 6], [8, 10], [15, 18]]",
-      expectedOutput: "[[1, 6], [8, 10], [15, 18]]",
-    },
-    {
-      id: "tc-2",
-      name: "Case 2",
-      input: "intervals = [[1, 4], [4, 5]]",
-      expectedOutput: "[[1, 5]]",
-    },
-  ],
-  hiddenTestCases: [
-    {
-      id: "htc-1",
-      name: "Hidden Case 1",
-      input: "intervals = [[1, 4], [0, 4]]",
-      expectedOutput: "[[0, 4]]",
-      hidden: true,
-    },
-    {
-      id: "htc-2",
-      name: "Hidden Case 2",
-      input: "intervals = [[1, 4], [0, 2], [3, 5]]",
-      expectedOutput: "[[0, 5]]",
-      hidden: true,
-    },
-  ],
+  testCases,
+  hiddenTestCases,
+  timeLimitMs: 2000,
+  memoryLimitMb: 256,
 };

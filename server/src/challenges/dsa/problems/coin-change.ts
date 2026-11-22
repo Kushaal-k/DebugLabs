@@ -1,4 +1,7 @@
 import type { DsaProblem } from "@debugLabs/shared";
+import { loadProblemTestCases } from "../testcases/loader.js";
+
+const { testCases, hiddenTestCases } = loadProblemTestCases("coin-change");
 
 export const COIN_CHANGE_PROBLEM: DsaProblem = {
   id: "coin-change",
@@ -6,104 +9,137 @@ export const COIN_CHANGE_PROBLEM: DsaProblem = {
   difficulty: "Medium",
   category: "Dynamic Programming",
   tags: ["Array", "Dynamic Programming", "Debugging"],
-  description: `You are given an integer array \`coins\` representing coins of different denominations and an integer \`amount\` representing a total amount of money.
+  entrypointMethod: "coinChange",
+  description: `Given coins of different denominations and an integer \`amount\`, find the fewest number of coins needed to make up that amount. If that amount cannot be made up, return \`-1\`.
 
-Return the fewest number of coins that you need to make up that amount. If that amount of money cannot be made up by any combination of the coins, return \`-1\`.
+**Input Format:**
+- Line 1: \`n amount\`
+- Line 2: \`n\` integers representing coin values
 
-You may assume that you have an infinite number of each kind of coin.`,
+**Output Format:**
+- Print the minimum number of coins, or \`-1\`.`,
   bugDescription:
-    "The dynamic programming array `dp` is initialized with `0` instead of infinity. Because `0` is smaller than any coin count, `Math.min(dp[a], dp[a - coin] + 1)` always chooses `0`, failing all valid combinations.",
+    "The dynamic programming array `dp` is initialized with 0 instead of infinity (amount + 1). Because 0 is smaller than any coin count, `min(dp[a], dp[a - coin] + 1)` always chooses 0.",
   hints: [
-    "When computing minimum values with dynamic programming, initialize the table entries with infinity (or `amount + 1`), not 0.",
-    "Ensure the base case `dp[0] = 0` (0 coins needed to make amount 0).",
-    "Return `dp[amount]` if it was reachable, otherwise return `-1`.",
+    "Initialize DP entries with infinity (or `amount + 1`), not 0.",
+    "Keep base case `dp[0] = 0`.",
   ],
   examples: [
     {
       id: 1,
-      input: "coins = [1, 2, 5], amount = 11",
+      input: "3 11\n1 2 5",
       output: "3",
-      explanation: "11 = 5 + 5 + 1",
     },
     {
       id: 2,
-      input: "coins = [2], amount = 3",
+      input: "1 3\n2",
       output: "-1",
     },
     {
       id: 3,
-      input: "coins = [1], amount = 0",
+      input: "1 0\n1",
       output: "0",
     },
   ],
   constraints: [
     "1 <= coins.length <= 12",
-    "1 <= coins[i] <= 2^31 - 1",
+    "1 <= coins[i] <= 10^4",
     "0 <= amount <= 10^4",
   ],
   starterCode: {
-    javascript: `/**
- * @param {number[]} coins
- * @param {number} amount
- * @return {number}
- */
-function coinChange(coins, amount) {
-  // BUG: Initializing with 0 causes Math.min to always remain 0!
+    javascript: `import fs from "node:fs";
+
+function main() {
+  const input = fs.readFileSync(0, "utf-8").trim().split(/\\s+/);
+  if (!input[0]) return;
+  const n = parseInt(input[0], 10);
+  const amount = parseInt(input[1], 10);
+  const coins = input.slice(2, 2 + n).map(Number);
+
+  // BUG: Initialized with 0 instead of infinity (amount + 1)
   const dp = new Array(amount + 1).fill(0);
+  dp[0] = 0;
 
   for (let a = 1; a <= amount; a++) {
-    for (const c of coins) {
-      if (a - c >= 0) {
-        dp[a] = Math.min(dp[a], dp[a - c] + 1);
+    for (const coin of coins) {
+      if (a - coin >= 0) {
+        dp[a] = Math.min(dp[a], dp[a - coin] + 1);
       }
     }
   }
 
-  return dp[amount] !== 0 ? dp[amount] : -1;
+  console.log(dp[amount] > amount ? -1 : dp[amount]);
 }
+
+main();
 `,
-    python: `from typing import List
+    python: `import sys
 
-class Solution:
-    def coinChange(self, coins: List[int], amount: int) -> int:
-        # BUG: Initializing with 0 causes min() to always stay 0!
-        dp = [0] * (amount + 1)
+def main():
+    input_data = sys.stdin.read().split()
+    if not input_data:
+        return
+    n = int(input_data[0])
+    amount = int(input_data[1])
+    coins = [int(x) for x in input_data[2:2 + n]]
 
-        for a in range(1, amount + 1):
-            for c in coins:
-                if a - c >= 0:
-                    dp[a] = min(dp[a], dp[a - c] + 1)
+    # BUG: Initialized with 0 instead of float('inf')
+    dp = [0] * (amount + 1)
+    dp[0] = 0
 
-        return dp[amount] if dp[amount] != 0 else -1
+    for a in range(1, amount + 1):
+        for c in coins:
+            if a - c >= 0:
+                dp[a] = min(dp[a], dp[a - c] + 1)
+
+    print(-1 if dp[amount] > amount else dp[amount])
+
+if __name__ == "__main__":
+    main()
 `,
-    cpp: `#include <vector>
+    cpp: `#include <iostream>
+#include <vector>
 #include <algorithm>
 using namespace std;
 
-class Solution {
-public:
-    int coinChange(vector<int>& coins, int amount) {
-        // BUG: Initializing with 0 causes min() to always pick 0!
-        vector<int> dp(amount + 1, 0);
+int main() {
+    int n, amount;
+    if (!(cin >> n >> amount)) return 0;
+    vector<int> coins(n);
+    for (int i = 0; i < n; i++) cin >> coins[i];
 
-        for (int a = 1; a <= amount; a++) {
-            for (int c : coins) {
-                if (a - c >= 0) {
-                    dp[a] = min(dp[a], dp[a - c] + 1);
-                }
+    // BUG: Initialized with 0 instead of infinity (amount + 1)
+    vector<int> dp(amount + 1, 0);
+    dp[0] = 0;
+
+    for (int a = 1; a <= amount; a++) {
+        for (int c : coins) {
+            if (a - c >= 0) {
+                dp[a] = min(dp[a], dp[a - c] + 1);
             }
         }
-
-        return dp[amount] != 0 ? dp[amount] : -1;
     }
-};
-`,
-    java: `import java.util.Arrays;
 
-class Solution {
-    public int coinChange(int[] coins, int amount) {
-        // BUG: Initializing with 0 causes Math.min to always stay 0!
+    cout << (dp[amount] > amount ? -1 : dp[amount]) << "\\n";
+    return 0;
+}
+`,
+    java: `import java.util.*;
+
+public class Main {
+    public static void main(String[] args) {
+        Scanner sc = new Scanner(System.in);
+        if (!sc.hasNextInt()) return;
+        int n = sc.nextInt();
+        int amount = sc.nextInt();
+        int[] coins = new int[n];
+        for (int i = 0; i < n; i++) {
+            coins[i] = sc.nextInt();
+        }
+
+        // BUG: Initialized with 0 instead of infinity (amount + 1)
         int[] dp = new int[amount + 1];
+        dp[0] = 0;
 
         for (int a = 1; a <= amount; a++) {
             for (int c : coins) {
@@ -113,45 +149,13 @@ class Solution {
             }
         }
 
-        return dp[amount] != 0 ? dp[amount] : -1;
+        System.out.println(dp[amount] > amount ? -1 : dp[amount]);
     }
 }
 `,
   },
-  testCases: [
-    {
-      id: "tc-1",
-      name: "Case 1",
-      input: "coins = [1, 2, 5], amount = 11",
-      expectedOutput: "3",
-    },
-    {
-      id: "tc-2",
-      name: "Case 2",
-      input: "coins = [2], amount = 3",
-      expectedOutput: "-1",
-    },
-    {
-      id: "tc-3",
-      name: "Case 3",
-      input: "coins = [1], amount = 0",
-      expectedOutput: "0",
-    },
-  ],
-  hiddenTestCases: [
-    {
-      id: "htc-1",
-      name: "Hidden Case 1",
-      input: "coins = [1, 3, 4], amount = 6",
-      expectedOutput: "2",
-      hidden: true,
-    },
-    {
-      id: "htc-2",
-      name: "Hidden Case 2",
-      input: "coins = [2], amount = 4",
-      expectedOutput: "2",
-      hidden: true,
-    },
-  ],
+  testCases,
+  hiddenTestCases,
+  timeLimitMs: 2000,
+  memoryLimitMb: 256,
 };
