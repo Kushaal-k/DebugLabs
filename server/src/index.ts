@@ -7,6 +7,7 @@ import { createServer } from "node:http";
 import "./db/index.js";
 import { ResponseModel } from "./models/response.model.js";
 import jobRoutes from "./routes/jobs.routes.js";
+import dsaRoutes from "./routes/dsa.routes.js";
 
 const app = express();
 const port = Number(process.env.PORT ?? 3001);
@@ -101,6 +102,7 @@ queueEvents.on("failed", async ({ jobId, failedReason }) => {
 });
 
 app.use("/api/v1/jobs", jobRoutes);
+app.use("/api/v1/dsa", dsaRoutes);
 
 httpServer.listen(port, host, () => {
   console.log(`Server running at http://${host}:${port}`);
