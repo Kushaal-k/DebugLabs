@@ -7,35 +7,177 @@
 
 :root {
   color-scheme: dark;
+  --ink: #f4f4f5;
+  --muted: #9a9aa3;
+  --faint: #6f6f78;
 }
 
 body {
   margin: 0;
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-  background-color: #0f0f10;
-  color: #ededed;
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
+  background-color: #070709;
+  color: var(--ink);
   overflow: hidden;
   -webkit-font-smoothing: antialiased;
 }
 
-/* Custom quiet scrollbar */
+.lab-shell {
+  position: relative;
+  height: 100dvh;
+  width: 100%;
+  overflow: hidden;
+  background:
+    radial-gradient(1200px 700px at 50% -10%, rgba(255, 255, 255, 0.04), transparent 55%),
+    #070709;
+  color: var(--ink);
+}
+
+.lab-ambient {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.orb {
+  position: absolute;
+  border-radius: 9999px;
+  filter: blur(70px);
+}
+
+.orb-emerald {
+  top: -18%;
+  left: -8%;
+  width: 46vw;
+  height: 46vw;
+  background: rgba(129, 92, 246, 0.22);
+}
+
+.orb-violet {
+  right: -10%;
+  bottom: -22%;
+  width: 42vw;
+  height: 42vw;
+  background: rgba(129, 92, 246, 0.2);
+}
+
+.orb-sky {
+  top: 38%;
+  left: 42%;
+  width: 28vw;
+  height: 28vw;
+  background: rgba(129, 92, 246, 0.12);
+}
+
+@layer components {
+  .glass {
+    background: #141418;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+  }
+
+  .glass-interactive {
+    transition:
+      background 180ms ease,
+      border-color 180ms ease;
+  }
+
+  .glass-interactive:hover {
+    background: #1c1c22;
+    border-color: rgba(255, 255, 255, 0.14);
+  }
+
+  .glass-panel {
+    background: #101014;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+  }
+
+  .glass-inset {
+    background: #0c0c10;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+  }
+}
+
+.lab-resize-col,
+.lab-resize-row {
+  position: relative;
+  flex-shrink: 0;
+  background: transparent;
+}
+
+.lab-resize-col {
+  width: 10px;
+  cursor: col-resize;
+}
+
+.lab-resize-row {
+  height: 10px;
+  cursor: row-resize;
+}
+
+.lab-resize-col::after,
+.lab-resize-row::after {
+  content: "";
+  position: absolute;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.16);
+  transition:
+    background 150ms ease,
+    height 150ms ease,
+    width 150ms ease;
+}
+
+.lab-resize-col::after {
+  top: 50%;
+  left: 50%;
+  width: 3px;
+  height: 28px;
+  transform: translate(-50%, -50%);
+}
+
+.lab-resize-row::after {
+  top: 50%;
+  left: 50%;
+  width: 28px;
+  height: 3px;
+  transform: translate(-50%, -50%);
+}
+
+.lab-resize-col:hover::after,
+.lab-resize-col:active::after {
+  height: 44px;
+  background: rgba(52, 211, 153, 0.85);
+}
+
+.lab-resize-row:hover::after,
+.lab-resize-row:active::after {
+  width: 44px;
+  background: rgba(52, 211, 153, 0.85);
+}
+
 ::-webkit-scrollbar,
 .xterm .xterm-viewport::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 8px;
+  height: 8px;
 }
+
 ::-webkit-scrollbar-track,
 .xterm .xterm-viewport::-webkit-scrollbar-track {
   background: transparent;
 }
+
 ::-webkit-scrollbar-thumb,
 .xterm .xterm-viewport::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.12);
-  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.14);
+  border: 2px solid transparent;
+  border-radius: 999px;
+  background-clip: padding-box;
 }
+
 ::-webkit-scrollbar-thumb:hover,
 .xterm .xterm-viewport::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.28);
+  border: 2px solid transparent;
+  background-clip: padding-box;
 }
 
 .xterm {

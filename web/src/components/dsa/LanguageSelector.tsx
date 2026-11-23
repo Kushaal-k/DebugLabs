@@ -45,7 +45,7 @@ export function LanguageSelector({
         type="button"
         disabled={disabled}
         onClick={() => setIsOpen((prev) => !prev)}
-        className="h-8 flex items-center gap-2 bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.08] hover:border-white/[0.14] text-[#ededed] text-xs font-normal px-2.5 rounded-lg backdrop-blur-md transition-all duration-150 disabled:opacity-40 cursor-pointer select-none"
+        className="glass-inset flex h-8 cursor-pointer select-none items-center gap-2 rounded-full px-3 text-xs font-normal text-[#ededed] transition-colors hover:bg-white/[0.08] disabled:opacity-40"
         title="Select programming language"
       >
         <Code2 className="w-3.5 h-3.5 text-[#85858b] stroke-[1.5]" />
@@ -61,11 +61,11 @@ export function LanguageSelector({
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 mt-1.5 w-48 bg-[#121215]/95 backdrop-blur-2xl border border-white/[0.12] rounded-xl shadow-[0_12px_40px_rgba(0,0,0,0.5)] py-1.5 z-50">
-          <div className="px-3 py-1 text-[11px] font-medium text-[#85858b] border-b border-white/[0.06] mb-1">
-            Languages
+        <div className="glass absolute right-0 z-50 mt-2 w-48 rounded-2xl py-1.5">
+          <div className="mb-1 border-b border-white/[0.06] px-3 py-1 text-[11px] font-medium tracking-wide text-[#85858b]">
+            Language
           </div>
-          <div className="p-1 space-y-0.5">
+          <div className="space-y-0.5 p-1">
             {LANGUAGE_OPTIONS.map((option) => {
               const isSelected = option.id === selectedLanguage;
               return (
@@ -73,10 +73,10 @@ export function LanguageSelector({
                   key={option.id}
                   type="button"
                   onClick={() => handleSelect(option)}
-                  className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs text-left cursor-pointer transition-all duration-100 ${
+                  className={`flex w-full cursor-pointer items-center justify-between rounded-xl px-2.5 py-1.5 text-left text-xs transition-colors ${
                     isSelected
-                      ? 'bg-white/[0.1] text-[#ededed] font-medium border border-white/[0.08]'
-                      : 'text-[#a1a1a6] hover:text-[#ededed] hover:bg-white/[0.05]'
+                      ? 'bg-white/[0.1] font-medium text-[#ededed]'
+                      : 'text-[#a1a1a6] hover:bg-white/[0.06] hover:text-[#ededed]'
                   }`}
                 >
                   <div className="flex items-center gap-2">
