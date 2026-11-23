@@ -93,9 +93,10 @@ test("Frontend DSA Service API Integration Test", async (t) => {
   const twoSum = await resDetail.json();
   assert.equal(twoSum.id, "two-sum");
   assert.ok(twoSum.starterCode.javascript);
+  assert.ok(!twoSum.starterCode.javascript.includes("BUG:"));
   assert.ok(twoSum.testCases.length > 0);
-  assert.ok(twoSum.bugDescription);
-  assert.ok(Array.isArray(twoSum.hints));
+  assert.equal(twoSum.bugDescription, undefined);
+  assert.equal(twoSum.hints, undefined);
 
   // 3. Run buggy starter code via API -> returns Wrong Answer summary
   const resRunBuggy = await fetch(`${apiBase}/problems/two-sum/run`, {

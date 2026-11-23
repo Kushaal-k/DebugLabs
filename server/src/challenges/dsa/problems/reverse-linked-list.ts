@@ -70,10 +70,9 @@ function main() {
   let prev = null;
   let curr = head;
   while (curr) {
-    // BUG: Overwriting curr.next before saving next node!
     curr.next = prev;
     prev = curr;
-    curr = curr.next; // Already changed to prev!
+    curr = curr.next;
   }
 
   const res = [];
@@ -112,10 +111,9 @@ def main():
     prev = None
     curr = head
     while curr:
-        # BUG: Overwriting curr.next before saving next reference!
         curr.next = prev
         prev = curr
-        curr = curr.next  # Already changed to prev!
+        curr = curr.next
 
     res = []
     p = prev
@@ -154,10 +152,9 @@ int main() {
     ListNode* prev = nullptr;
     ListNode* curr = head;
     while (curr) {
-        // BUG: Overwriting curr->next before saving next node!
         curr->next = prev;
         prev = curr;
-        curr = curr->next; // Already changed to prev!
+        curr = curr->next;
     }
 
     bool first = true;
@@ -195,10 +192,9 @@ public class Main {
         ListNode prev = null;
         ListNode curr = head;
         while (curr != null) {
-            // BUG: Overwriting curr.next before saving next node!
             curr.next = prev;
             prev = curr;
-            curr = curr.next; // Already changed to prev!
+            curr = curr.next;
         }
 
         StringBuilder sb = new StringBuilder();
