@@ -56,9 +56,6 @@ export default function App() {
   const [bottomTab, setBottomTab] =
     useState<BottomPanelTab>('testcases');
 
-  const [logs, setLogs] = useState<string[]>([]);
-  const [failureCount, setFailureCount] = useState<number>(0);
-
   const [problems, setProblems] = useState<DsaProblemSummary[]>([]);
   const [isLoadingProblems, setIsLoadingProblems] = useState<boolean>(true);
 
@@ -74,6 +71,57 @@ export default function App() {
 
   const [isDsaRunning, setIsDsaRunning] = useState<boolean>(false);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+
+  // Panel sizing and resizer states
+  const [leftWidth, setLeftWidth] = useState<number>(380);
+  const [bottomHeight, setBottomHeight] = useState<number>(260);
+  const [isDraggingH, setIsDraggingH] = useState<boolean>(false);
+  const [isDraggingV, setIsDraggingV] = useState<boolean>(false);
+
+  const startDraggingH = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    setIsDraggingH(true);
+  }, []);
+
+  const startDraggingV = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    setIsDraggingV(true);
+  }, []);
+
+  useEffect(() => {
+    if (!isDraggingH && !isDraggingV) return;
+
+    const handleMouseMove = (e: MouseEvent) => {
+      if (isDraggingH) {
+        const minW = 260;
+        const maxW = Math.max(minW, window.innerWidth * 0.65);
+        const newWidth = Math.max(minW, Math.min(e.clientX, maxW));
+        setLeftWidth(newWidth);
+      }
+      if (isDraggingV) {
+        const minH = 120;
+        const maxH = Math.max(minH, window.innerHeight - 180);
+        const newHeight = Math.max(
+          minH,
+          Math.min(window.innerHeight - e.clientY, maxH)
+        );
+        setBottomHeight(newHeight);
+      }
+    };
+
+    const handleMouseUp = () => {
+      setIsDraggingH(false);
+      setIsDraggingV(false);
+    };
+
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [isDraggingH, isDraggingV]);
 
   // Fetch problems list from backend API on mount
   useEffect(() => {
@@ -142,12 +190,6 @@ export default function App() {
     setTestCases(currentProblem.testCases);
     setDsaRunSummary(null);
     setDsaSubmissionResult(null);
-    setFailureCount(0);
-
-    setLogs((previous) => [
-      ...previous,
-      '\x1b[90mWorkspace and test cases restored to initial state\x1b[0m',
-    ]);
   };
 
   const handleSelectLanguage = (newLanguage: SupportedLanguage) => {
@@ -161,11 +203,6 @@ export default function App() {
         language: newLanguage,
         content: currentProblem.starterCode[newLanguage] || '',
       },
-    ]);
-
-    setLogs((previous) => [
-      ...previous,
-      `\x1b[36m[Language]\x1b[0m Switched active DSA environment to ${newLanguage.toUpperCase()}`,
     ]);
   };
 
@@ -186,16 +223,8 @@ export default function App() {
           content: problem.starterCode[selectedLanguage] || '',
         },
       ]);
-
-      setLogs((previous) => [
-        ...previous,
-        `\x1b[36m[DSA Lab]\x1b[0m Loaded "${problem.title}" (${problem.difficulty})`,
-      ]);
-    } catch (err: any) {
-      setLogs((previous) => [
-        ...previous,
-        `\x1b[31m[DSA Error]\x1b[0m Failed to load problem: ${err.message || String(err)}\x1b[0m`,
-      ]);
+    } catch (err: unknown) {
+      console.error('Failed to load problem:', err);
     }
   };
 
@@ -236,12 +265,6 @@ export default function App() {
     setDsaSubmissionResult(null);
     setBottomTab('results');
 
-    setLogs((previous) => [
-      ...previous,
-      '',
-      `\x1b[36m→ Evaluating ${testCases.length} test cases for ${currentProblem.title} (${selectedLanguage})...\x1b[0m`,
-    ]);
-
     try {
       const summary = await runDsaTestCases(
         currentProblem.id,
@@ -251,38 +274,13 @@ export default function App() {
       );
 
       setDsaRunSummary(summary);
-
-      const verdict =
-        summary.verdict ||
-        (summary.status === 'passed' ? 'Accepted' : 'Wrong Answer');
-
-      if (summary.status === 'passed') {
-        setLogs((previous) => [
-          ...previous,
-          `\x1b[32m✓ ${verdict}: All ${summary.total} test cases passed!\x1b[0m \x1b[90m(${summary.executionTimeMs}ms)\x1b[0m`,
-        ]);
-      } else {
-        setLogs((previous) => [
-          ...previous,
-          `\x1b[31m✗ ${verdict}: ${summary.passed}/${summary.total} test cases passed. ${summary.failed} failed.\x1b[0m \x1b[90m(${summary.executionTimeMs}ms)\x1b[0m`,
-        ]);
-      }
     } catch (error) {
-      const message =
-        error instanceof Error
-          ? error.message
-          : 'Error evaluating test cases';
-
-      setLogs((previous) => [
-        ...previous,
-        `\x1b[31mTest evaluation error: ${message}\x1b[0m`,
-      ]);
+      console.error('Test evaluation error:', error);
     } finally {
       setIsDsaRunning(false);
     }
   }, [
     currentProblem.id,
-    currentProblem.title,
     files,
     selectedLanguage,
     testCases,
@@ -299,13 +297,6 @@ export default function App() {
     setDsaRunSummary(null);
     setBottomTab('results');
 
-    setLogs((previous) => [
-      ...previous,
-      '',
-      `\x1b[35m→ Submitting solution for ${currentProblem.title} (${selectedLanguage})...\x1b[0m`,
-      `\x1b[90mRunning all test cases including hidden grading tests...\x1b[0m`,
-    ]);
-
     try {
       const result = await submitDsaSolution(
         currentProblem.id,
@@ -314,34 +305,13 @@ export default function App() {
       );
 
       setDsaSubmissionResult(result);
-
-      if (result.status === 'Accepted') {
-        setLogs((previous) => [
-          ...previous,
-          `\x1b[32m🎉 Accepted! All ${result.passedCount}/${result.totalCount} test cases passed!\x1b[0m \x1b[90m(${result.executionTimeMs}ms)\x1b[0m`,
-        ]);
-      } else {
-        setLogs((previous) => [
-          ...previous,
-          `\x1b[31m✗ ${result.status}: ${result.passedCount}/${result.totalCount} test cases passed.\x1b[0m \x1b[90m(${result.executionTimeMs}ms)\x1b[0m`,
-        ]);
-      }
     } catch (error) {
-      const message =
-        error instanceof Error
-          ? error.message
-          : 'Error submitting solution';
-
-      setLogs((previous) => [
-        ...previous,
-        `\x1b[31mSubmission error: ${message}\x1b[0m`,
-      ]);
+      console.error('Submission error:', error);
     } finally {
       setIsSubmitting(false);
     }
   }, [
     currentProblem.id,
-    currentProblem.title,
     files,
     selectedLanguage,
   ]);
@@ -379,7 +349,10 @@ export default function App() {
   }
 
   return (
-    <div className="flex flex-col h-screen w-screen bg-[#0f0f10] text-[#ededed] overflow-hidden">
+    <div className="flex flex-col h-screen w-screen bg-[#08080a] text-[#ededed] overflow-hidden relative select-none">
+      {/* Ambient gradient layer for glassmorphic depth */}
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_60%_at_50%_-10%,rgba(16,185,129,0.06),rgba(255,255,255,0))] pointer-events-none" />
+
       <EditorToolbar
         onBack={() => setShowDashboard(true)}
         problemTitle={currentProblem.title}
@@ -393,8 +366,12 @@ export default function App() {
         isSubmitting={isSubmitting}
       />
 
-      <div className="flex flex-1 overflow-hidden">
-        <aside className="w-80 md:w-96 bg-[#0f0f10] border-r border-white/[0.08] flex flex-col select-none shrink-0 overflow-hidden">
+      <div className="flex flex-1 overflow-hidden relative z-10">
+        {/* Left Drawer: Problem Description */}
+        <aside
+          style={{ width: `${leftWidth}px` }}
+          className="bg-[#0c0c0f]/70 backdrop-blur-xl border-r border-white/[0.08] flex flex-col shrink-0 overflow-hidden shadow-[4px_0_24px_rgba(0,0,0,0.3)]"
+        >
           <DsaProblemTab
             currentProblem={currentProblem}
             problems={problems}
@@ -402,23 +379,37 @@ export default function App() {
           />
         </aside>
 
-        <div className="flex-1 flex flex-col bg-[#141415] overflow-hidden">
-          <main className="flex-1 flex flex-col overflow-hidden">
+        {/* Horizontal Resize Handle */}
+        <div
+          onMouseDown={startDraggingH}
+          className="w-1.5 cursor-col-resize relative flex items-center justify-center bg-transparent hover:bg-emerald-500/30 active:bg-emerald-500/50 transition-colors z-20 group shrink-0"
+          title="Drag to resize panel"
+        >
+          <div className="w-0.5 h-7 rounded-full bg-white/20 group-hover:bg-emerald-400 group-active:bg-emerald-300 transition-colors" />
+        </div>
+
+        {/* Right Workspace: Code Editor & Resizable Bottom Panel */}
+        <div className="flex-1 flex flex-col bg-[#0c0c0f]/40 backdrop-blur-md overflow-hidden relative">
+          <main className="flex-1 flex flex-col overflow-hidden relative">
             <CodeEditor
               file={activeFile}
               onChange={handleCodeChange}
             />
           </main>
 
+          {/* Vertical Resize Handle */}
+          <div
+            onMouseDown={startDraggingV}
+            className="h-1.5 cursor-row-resize relative flex items-center justify-center bg-transparent hover:bg-emerald-500/30 active:bg-emerald-500/50 transition-colors z-20 group shrink-0"
+            title="Drag to resize panel"
+          >
+            <div className="h-0.5 w-7 rounded-full bg-white/20 group-hover:bg-emerald-400 group-active:bg-emerald-300 transition-colors" />
+          </div>
+
           <OutputTerminal
-            logs={logs}
-            failureCount={failureCount}
+            height={bottomHeight}
             activeTab={bottomTab}
             onTabChange={setBottomTab}
-            onClear={() => {
-              setLogs([]);
-              setFailureCount(0);
-            }}
             testCases={testCases}
             onUpdateTestCase={handleUpdateTestCase}
             onAddTestCase={handleAddTestCase}
@@ -430,6 +421,15 @@ export default function App() {
           />
         </div>
       </div>
+
+      {/* Screen-wide Drag Overlay to prevent Monaco / text from intercepting mouse events */}
+      {(isDraggingH || isDraggingV) && (
+        <div
+          className={`fixed inset-0 z-50 select-none ${
+            isDraggingH ? 'cursor-col-resize' : 'cursor-row-resize'
+          }`}
+        />
+      )}
     </div>
   );
 }
