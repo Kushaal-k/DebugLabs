@@ -44,9 +44,7 @@ export const TWO_SUM_PROBLEM: DsaProblem = {
     "Exactly one valid solution exists.",
   ],
   starterCode: {
-    javascript: `// User function Template for javascript
-
-class Solution {
+    javascript: `class Solution {
   /**
    * @param {number[]} nums
    * @param {number} target
@@ -86,9 +84,7 @@ function main() {
 main();
 //} Driver Code Ends
 `,
-    python: `# User function Template for python3
-
-class Solution:
+    python: `class Solution:
     def twoSum(self, nums: list[int], target: int) -> list[int]:
         seen = {}
         for i, num in enumerate(nums):
@@ -119,9 +115,7 @@ if __name__ == "__main__":
     main()
 # } Driver Code Ends
 `,
-    cpp: `// User function Template for C++
-
-#include <vector>
+    cpp: `#include <vector>
 #include <unordered_map>
 using namespace std;
 
@@ -159,9 +153,7 @@ int main() {
 }
 //} Driver Code Ends
 `,
-    java: `// User function Template for Java
-
-import java.util.*;
+    java: `import java.util.*;
 
 class Solution {
     public int[] twoSum(int[] nums, int target) {

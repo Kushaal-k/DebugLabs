@@ -46,9 +46,7 @@ export const REVERSE_LINKED_LIST_PROBLEM: DsaProblem = {
     "-5000 <= val <= 5000",
   ],
   starterCode: {
-    javascript: `// User function Template for javascript
-
-/**
+    javascript: `/**
  * function ListNode(val, next) {
  *   this.val = (val===undefined ? 0 : val);
  *   this.next = (next===undefined ? null : next);
@@ -111,9 +109,7 @@ function main() {
 main();
 //} Driver Code Ends
 `,
-    python: `# User function Template for python3
-
-# class ListNode:
+    python: `# class ListNode:
 #     def __init__(self, val=0, next=None):
 #         self.val = val
 #         self.next = next
@@ -167,9 +163,7 @@ if __name__ == "__main__":
     main()
 # } Driver Code Ends
 `,
-    cpp: `// User function Template for C++
-
-struct ListNode {
+    cpp: `struct ListNode {
     int val;
     ListNode* next;
     ListNode(int x) : val(x), next(nullptr) {}
@@ -224,9 +218,7 @@ int main() {
 }
 //} Driver Code Ends
 `,
-    java: `// User function Template for Java
-
-class ListNode {
+    java: `class ListNode {
     int val;
     ListNode next;
     ListNode(int val) { this.val = val; }

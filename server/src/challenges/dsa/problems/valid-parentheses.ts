@@ -45,9 +45,7 @@ export const VALID_PARENTHESES_PROBLEM: DsaProblem = {
     "s consists of parentheses only '()[]{}'.",
   ],
   starterCode: {
-    javascript: `// User function Template for javascript
-
-class Solution {
+    javascript: `class Solution {
   /**
    * @param {string} s
    * @return {boolean}
@@ -93,9 +91,7 @@ function main() {
 main();
 //} Driver Code Ends
 `,
-    python: `# User function Template for python3
-
-class Solution:
+    python: `class Solution:
     def isValid(self, s: str) -> bool:
         if not s:
             return True
@@ -131,9 +127,7 @@ if __name__ == "__main__":
     main()
 # } Driver Code Ends
 `,
-    cpp: `// User function Template for C++
-
-#include <string>
+    cpp: `#include <string>
 #include <stack>
 using namespace std;
 
@@ -184,9 +178,7 @@ int main() {
 }
 //} Driver Code Ends
 `,
-    java: `// User function Template for Java
-
-import java.util.*;
+    java: `import java.util.*;
 
 class Solution {
     public boolean isValid(String s) {

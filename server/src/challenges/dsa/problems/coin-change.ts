@@ -47,9 +47,7 @@ export const COIN_CHANGE_PROBLEM: DsaProblem = {
     "0 <= amount <= 10^4",
   ],
   starterCode: {
-    javascript: `// User function Template for javascript
-
-class Solution {
+    javascript: `class Solution {
   /**
    * @param {number[]} coins
    * @param {number} amount
@@ -89,9 +87,7 @@ function main() {
 main();
 //} Driver Code Ends
 `,
-    python: `# User function Template for python3
-
-class Solution:
+    python: `class Solution:
     def coinChange(self, coins: list[int], amount: int) -> int:
         dp = [0] * (amount + 1)
         dp[0] = 0
@@ -122,9 +118,7 @@ if __name__ == "__main__":
     main()
 # } Driver Code Ends
 `,
-    cpp: `// User function Template for C++
-
-#include <vector>
+    cpp: `#include <vector>
 #include <algorithm>
 using namespace std;
 
@@ -162,9 +156,7 @@ int main() {
 }
 //} Driver Code Ends
 `,
-    java: `// User function Template for Java
-
-import java.util.*;
+    java: `import java.util.*;
 
 class Solution {
     public int coinChange(int[] coins, int amount) {

@@ -70,9 +70,7 @@ You can return the answer in any order.`,
       'Only one valid answer exists.',
     ],
     starterCode: {
-      javascript: `// User function Template for javascript
-
-class Solution {
+      javascript: `class Solution {
   /**
    * @param {number[]} nums
    * @param {number} target
@@ -231,9 +229,7 @@ An **Anagram** is a word or phrase formed by rearranging the letters of a differ
       's and t consist of lowercase English letters.',
     ],
     starterCode: {
-      javascript: `// User function Template for javascript
-
-class Solution {
+      javascript: `class Solution {
   /**
    * @param {string} s
    * @param {string} t
