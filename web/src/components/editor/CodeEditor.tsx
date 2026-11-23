@@ -47,20 +47,20 @@ export function CodeEditor({ file, onChange }: Props) {
         { token: 'type', foreground: 'ce93d8' },
       ],
       colors: {
-        'editor.background': '#141415',
+        'editor.background': '#0c0c0f',
         'editor.foreground': '#ededed',
-        'editor.lineHighlightBackground': '#19191b',
-        'editorLineNumber.foreground': '#52525b',
+        'editor.lineHighlightBackground': '#141418',
+        'editorLineNumber.foreground': '#45454d',
         'editorLineNumber.activeForeground': '#ededed',
-        'editorGutter.background': '#141415',
-        'editor.selectionBackground': '#ffffff1f',
+        'editorGutter.background': '#0c0c0f',
+        'editor.selectionBackground': '#ffffff18',
         'editorCursor.foreground': '#ededed',
       },
     });
   };
 
   return (
-    <div className="flex-1 h-full flex flex-col bg-[#141415] overflow-hidden">
+    <div className="flex-1 h-full flex flex-col bg-[#0c0c0f] overflow-hidden">
       <Editor
         height="100%"
         language={language}

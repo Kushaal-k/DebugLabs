@@ -45,7 +45,7 @@ export function LanguageSelector({
         type="button"
         disabled={disabled}
         onClick={() => setIsOpen((prev) => !prev)}
-        className="h-8 flex items-center gap-2 bg-[#19191b] hover:bg-[#232325] border border-white/[0.08] hover:border-white/[0.12] text-[#ededed] text-xs font-normal px-2.5 rounded-md transition-colors duration-150 disabled:opacity-50 cursor-pointer select-none"
+        className="h-8 flex items-center gap-2 bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.08] hover:border-white/[0.14] text-[#ededed] text-xs font-normal px-2.5 rounded-lg backdrop-blur-md transition-all duration-150 disabled:opacity-40 cursor-pointer select-none"
         title="Select programming language"
       >
         <Code2 className="w-3.5 h-3.5 text-[#85858b] stroke-[1.5]" />
@@ -61,7 +61,7 @@ export function LanguageSelector({
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 mt-1 w-48 bg-[#19191b] border border-white/[0.08] rounded-lg shadow-xl py-1 z-50">
+        <div className="absolute right-0 mt-1.5 w-48 bg-[#121215]/95 backdrop-blur-2xl border border-white/[0.12] rounded-xl shadow-[0_12px_40px_rgba(0,0,0,0.5)] py-1.5 z-50">
           <div className="px-3 py-1 text-[11px] font-medium text-[#85858b] border-b border-white/[0.06] mb-1">
             Languages
           </div>
@@ -73,10 +73,10 @@ export function LanguageSelector({
                   key={option.id}
                   type="button"
                   onClick={() => handleSelect(option)}
-                  className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-md text-xs text-left cursor-pointer transition-colors duration-100 ${
+                  className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs text-left cursor-pointer transition-all duration-100 ${
                     isSelected
-                      ? 'bg-[#232325] text-[#ededed] font-medium'
-                      : 'text-[#a1a1a6] hover:text-[#ededed] hover:bg-white/[0.04]'
+                      ? 'bg-white/[0.1] text-[#ededed] font-medium border border-white/[0.08]'
+                      : 'text-[#a1a1a6] hover:text-[#ededed] hover:bg-white/[0.05]'
                   }`}
                 >
                   <div className="flex items-center gap-2">
@@ -86,7 +86,7 @@ export function LanguageSelector({
                     </span>
                   </div>
                   {isSelected && (
-                    <Check className="w-3.5 h-3.5 text-[#ededed] stroke-[1.5]" />
+                    <Check className="w-3.5 h-3.5 text-emerald-400 stroke-[1.5]" />
                   )}
                 </button>
               );

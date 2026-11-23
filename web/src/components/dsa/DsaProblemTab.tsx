@@ -3,11 +3,11 @@ import {
   Tag,
   Layers,
   ChevronDown,
-  AlertCircle,
   HelpCircle,
 } from 'lucide-react';
 import type { DsaProblem, DsaProblemSummary } from '../../types/dsa';
 import { DEFAULT_DSA_PROBLEMS } from '../../data/dsaScenarios';
+import { MarkdownContent } from '../common/MarkdownContent';
 
 interface Props {
   currentProblem: DsaProblem;
@@ -34,9 +34,9 @@ export function DsaProblemTab({
   const problemList = problems && problems.length > 0 ? problems : DEFAULT_DSA_PROBLEMS;
 
   return (
-    <div className="flex-1 flex flex-col h-full bg-[#0f0f10] text-[#ededed] overflow-y-auto custom-scrollbar select-text">
-      {/* Problem Header */}
-      <div className="p-4 border-b border-white/[0.08] bg-[#0f0f10] sticky top-0 z-10">
+    <div className="flex-1 flex flex-col h-full bg-[#0f0f10]/60 backdrop-blur-xl text-[#ededed] overflow-y-auto custom-scrollbar select-text">
+      {/* Sticky Header with Frosted Glass */}
+      <div className="p-4 border-b border-white/[0.08] bg-[#0f0f10]/80 backdrop-blur-xl sticky top-0 z-10">
         <div className="flex items-center justify-between gap-3 mb-2.5">
           <h1 className="text-sm font-semibold text-[#ededed] tracking-tight truncate">
             {currentProblem.title}
@@ -49,7 +49,7 @@ export function DsaProblemTab({
               onChange={(e) => {
                 onSelectProblem(e.target.value);
               }}
-              className="h-7 bg-[#19191b] hover:bg-[#232325] border border-white/[0.08] text-[#ededed] text-xs rounded-md px-2.5 pr-6 cursor-pointer appearance-none outline-none font-sans transition-colors"
+              className="h-7 bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.08] text-[#ededed] text-xs rounded-lg px-2.5 pr-6 cursor-pointer appearance-none outline-none font-sans backdrop-blur-md transition-colors"
             >
               {problemList.map((prob) => (
                 <option key={prob.id} value={prob.id} className="bg-[#19191b]">
@@ -63,12 +63,12 @@ export function DsaProblemTab({
 
         <div className="flex flex-wrap items-center gap-1.5">
           <span
-            className={`text-[11px] font-medium px-2 py-0.5 rounded-[4px] border ${difficultyColor}`}
+            className={`text-[11px] font-medium px-2 py-0.5 rounded-md border backdrop-blur-sm ${difficultyColor}`}
           >
             {currentProblem.difficulty}
           </span>
 
-          <span className="flex items-center gap-1 text-[11px] text-[#a1a1a6] bg-[#19191b] px-2 py-0.5 rounded-[4px] border border-white/[0.06]">
+          <span className="flex items-center gap-1 text-[11px] text-[#a1a1a6] bg-white/[0.04] px-2 py-0.5 rounded-md border border-white/[0.06] backdrop-blur-sm">
             <Layers className="w-3 h-3 text-[#85858b] stroke-[1.5]" />
             {currentProblem.category}
           </span>
@@ -76,7 +76,7 @@ export function DsaProblemTab({
           {currentProblem.tags.map((tag) => (
             <span
               key={tag}
-              className="flex items-center gap-1 text-[11px] text-[#85858b] bg-[#141415] px-2 py-0.5 rounded-[4px] border border-white/[0.06]"
+              className="flex items-center gap-1 text-[11px] text-[#85858b] bg-white/[0.02] px-2 py-0.5 rounded-md border border-white/[0.04] backdrop-blur-sm"
             >
               <Tag className="w-3 h-3 stroke-[1.5]" />
               {tag}
@@ -87,49 +87,9 @@ export function DsaProblemTab({
 
       {/* Problem Content */}
       <div className="p-4 space-y-6 text-xs leading-relaxed text-[#a1a1a6]">
-        {/* Bug Overview */}
-        {currentProblem.bugDescription && (
-          <section className="bg-[#19191b] border border-white/[0.08] rounded-lg p-3.5 space-y-2">
-            <div className="flex items-center gap-2 text-xs font-medium text-[#ededed]">
-              <AlertCircle className="w-3.5 h-3.5 text-amber-400 stroke-[1.5]" />
-              <span>Bug overview</span>
-            </div>
-            <p className="text-[12px] text-[#d4d4d8] leading-relaxed">
-              {currentProblem.bugDescription}
-            </p>
-          </section>
-        )}
-
-        {/* Debugging Hints */}
-        {currentProblem.hints && currentProblem.hints.length > 0 && (
-          <section className="space-y-2">
-            <h2 className="text-xs font-medium text-[#85858b] flex items-center gap-1.5">
-              <HelpCircle className="w-3.5 h-3.5 stroke-[1.5]" />
-              <span>Debugging hints</span>
-            </h2>
-            <div className="space-y-1.5">
-              {currentProblem.hints.map((hint, i) => (
-                <details
-                  key={i}
-                  className="group bg-[#19191b] border border-white/[0.08] rounded-lg p-3 text-[12px] text-[#a1a1a6]"
-                >
-                  <summary className="cursor-pointer font-medium text-[#ededed] select-none text-[11px] hover:text-[#4cc38a] transition-colors">
-                    Hint {i + 1}
-                  </summary>
-                  <p className="mt-2 pl-2 border-l border-white/[0.12] text-[11px] leading-5 text-[#a1a1a6]">
-                    {hint}
-                  </p>
-                </details>
-              ))}
-            </div>
-          </section>
-        )}
-
-        {/* Description */}
+        {/* Description parsed with Markdown */}
         <section>
-          <div className="whitespace-pre-line text-[#ededed] font-sans text-[13px] leading-6">
-            {currentProblem.description}
-          </div>
+          <MarkdownContent content={currentProblem.description} />
         </section>
 
         {/* Examples */}
@@ -140,12 +100,12 @@ export function DsaProblemTab({
           {currentProblem.examples.map((example) => (
             <div
               key={example.id}
-              className="bg-[#19191b] border border-white/[0.08] rounded-lg p-3.5 space-y-2"
+              className="bg-white/[0.02] backdrop-blur-md border border-white/[0.08] hover:border-white/[0.12] rounded-xl p-3.5 space-y-2 shadow-sm transition-colors"
             >
               <div className="text-[12px] font-medium text-[#ededed]">
                 Example {example.id}
               </div>
-              <div className="space-y-1.5 font-mono text-[11px] bg-[#0f0f10] p-2.5 rounded-md border border-white/[0.04]">
+              <div className="space-y-1.5 font-mono text-[11px] bg-black/40 p-2.5 rounded-lg border border-white/[0.04]">
                 <div>
                   <span className="text-[#85858b]">Input </span>
                   <span className="text-[#ededed]">{example.input}</span>
@@ -173,13 +133,38 @@ export function DsaProblemTab({
           <ul className="space-y-1.5 font-mono text-[11px] text-[#a1a1a6] list-disc list-inside">
             {currentProblem.constraints.map((c, i) => (
               <li key={i} className="leading-5">
-                <code className="text-[#ededed] bg-[#19191b] px-1.5 py-0.5 rounded-[4px] border border-white/[0.06]">
+                <code className="text-[#ededed] bg-white/[0.04] px-1.5 py-0.5 rounded-md border border-white/[0.06]">
                   {c}
                 </code>
               </li>
             ))}
           </ul>
         </section>
+
+        {/* Debugging Hints at the bottom */}
+        {currentProblem.hints && currentProblem.hints.length > 0 && (
+          <section className="space-y-2 pt-2 border-t border-white/[0.06]">
+            <h2 className="text-xs font-medium text-[#85858b] flex items-center gap-1.5">
+              <HelpCircle className="w-3.5 h-3.5 stroke-[1.5]" />
+              <span>Debugging hints</span>
+            </h2>
+            <div className="space-y-1.5">
+              {currentProblem.hints.map((hint, i) => (
+                <details
+                  key={i}
+                  className="group bg-white/[0.02] backdrop-blur-md border border-white/[0.08] rounded-xl p-3 text-[12px] text-[#a1a1a6]"
+                >
+                  <summary className="cursor-pointer font-medium text-[#ededed] select-none text-[11px] hover:text-[#4cc38a] transition-colors">
+                    Hint {i + 1}
+                  </summary>
+                  <p className="mt-2 pl-2 border-l border-white/[0.12] text-[11px] leading-5 text-[#a1a1a6]">
+                    {hint}
+                  </p>
+                </details>
+              ))}
+            </div>
+          </section>
+        )}
       </div>
     </div>
   );
