@@ -47,7 +47,33 @@ export const COIN_CHANGE_PROBLEM: DsaProblem = {
     "0 <= amount <= 10^4",
   ],
   starterCode: {
-    javascript: `import fs from "node:fs";
+    javascript: `// User function Template for javascript
+
+class Solution {
+  /**
+   * @param {number[]} coins
+   * @param {number} amount
+   * @return {number}
+   */
+  coinChange(coins, amount) {
+    const dp = new Array(amount + 1).fill(0);
+    dp[0] = 0;
+
+    for (let a = 1; a <= amount; a++) {
+      for (const coin of coins) {
+        if (a - coin >= 0) {
+          dp[a] = Math.min(dp[a], dp[a - coin] + 1);
+        }
+      }
+    }
+
+    return dp[amount] > amount ? -1 : dp[amount];
+  }
+}
+
+//{ Driver Code Starts
+// Initial Template for javascript
+import fs from "node:fs";
 
 function main() {
   const input = fs.readFileSync(0, "utf-8").trim().split(/\\s+/);
@@ -56,23 +82,30 @@ function main() {
   const amount = parseInt(input[1], 10);
   const coins = input.slice(2, 2 + n).map(Number);
 
-  const dp = new Array(amount + 1).fill(0);
-  dp[0] = 0;
-
-  for (let a = 1; a <= amount; a++) {
-    for (const coin of coins) {
-      if (a - coin >= 0) {
-        dp[a] = Math.min(dp[a], dp[a - coin] + 1);
-      }
-    }
-  }
-
-  console.log(dp[amount] > amount ? -1 : dp[amount]);
+  const solution = new Solution();
+  console.log(solution.coinChange(coins, amount));
 }
 
 main();
+//} Driver Code Ends
 `,
-    python: `import sys
+    python: `# User function Template for python3
+
+class Solution:
+    def coinChange(self, coins: list[int], amount: int) -> int:
+        dp = [0] * (amount + 1)
+        dp[0] = 0
+
+        for a in range(1, amount + 1):
+            for c in coins:
+                if a - c >= 0:
+                    dp[a] = min(dp[a], dp[a - c] + 1)
+
+        return -1 if dp[amount] > amount else dp[amount]
+
+# { Driver Code Starts
+# Initial Template for python3
+import sys
 
 def main():
     input_data = sys.stdin.read().split()
@@ -82,23 +115,40 @@ def main():
     amount = int(input_data[1])
     coins = [int(x) for x in input_data[2:2 + n]]
 
-    dp = [0] * (amount + 1)
-    dp[0] = 0
-
-    for a in range(1, amount + 1):
-        for c in coins:
-            if a - c >= 0:
-                dp[a] = min(dp[a], dp[a - c] + 1)
-
-    print(-1 if dp[amount] > amount else dp[amount])
+    solution = Solution()
+    print(solution.coinChange(coins, amount))
 
 if __name__ == "__main__":
     main()
+# } Driver Code Ends
 `,
-    cpp: `#include <iostream>
+    cpp: `// User function Template for C++
+
 #include <vector>
 #include <algorithm>
 using namespace std;
+
+class Solution {
+public:
+    int coinChange(vector<int>& coins, int amount) {
+        vector<int> dp(amount + 1, 0);
+        dp[0] = 0;
+
+        for (int a = 1; a <= amount; a++) {
+            for (int c : coins) {
+                if (a - c >= 0) {
+                    dp[a] = min(dp[a], dp[a - c] + 1);
+                }
+            }
+        }
+
+        return dp[amount] > amount ? -1 : dp[amount];
+    }
+};
+
+//{ Driver Code Starts
+// Initial Template for C++
+#include <iostream>
 
 int main() {
     int n, amount;
@@ -106,34 +156,18 @@ int main() {
     vector<int> coins(n);
     for (int i = 0; i < n; i++) cin >> coins[i];
 
-    vector<int> dp(amount + 1, 0);
-    dp[0] = 0;
-
-    for (int a = 1; a <= amount; a++) {
-        for (int c : coins) {
-            if (a - c >= 0) {
-                dp[a] = min(dp[a], dp[a - c] + 1);
-            }
-        }
-    }
-
-    cout << (dp[amount] > amount ? -1 : dp[amount]) << "\\n";
+    Solution solution;
+    cout << solution.coinChange(coins, amount) << "\\n";
     return 0;
 }
+//} Driver Code Ends
 `,
-    java: `import java.util.*;
+    java: `// User function Template for Java
 
-public class Main {
-    public static void main(String[] args) {
-        Scanner sc = new Scanner(System.in);
-        if (!sc.hasNextInt()) return;
-        int n = sc.nextInt();
-        int amount = sc.nextInt();
-        int[] coins = new int[n];
-        for (int i = 0; i < n; i++) {
-            coins[i] = sc.nextInt();
-        }
+import java.util.*;
 
+class Solution {
+    public int coinChange(int[] coins, int amount) {
         int[] dp = new int[amount + 1];
         dp[0] = 0;
 
@@ -145,9 +179,28 @@ public class Main {
             }
         }
 
-        System.out.println(dp[amount] > amount ? -1 : dp[amount]);
+        return dp[amount] > amount ? -1 : dp[amount];
     }
 }
+
+//{ Driver Code Starts
+// Initial Template for Java
+public class Main {
+    public static void main(String[] args) {
+        Scanner sc = new Scanner(System.in);
+        if (!sc.hasNextInt()) return;
+        int n = sc.nextInt();
+        int amount = sc.nextInt();
+        int[] coins = new int[n];
+        for (int i = 0; i < n; i++) {
+            coins[i] = sc.nextInt();
+        }
+
+        Solution solution = new Solution();
+        System.out.println(solution.coinChange(coins, amount));
+    }
+}
+//} Driver Code Ends
 `,
   },
   testCases,

@@ -116,8 +116,8 @@ test("Frontend DSA Service API Integration Test", async (t) => {
 
   // 4. Run fixed code via API -> returns Accepted summary
   const fixedJsCode = twoSum.starterCode.javascript.replace(
-    "${seen.get(complement) + 1} ${i + 1}",
-    "${seen.get(complement)} ${i}"
+    "[seen.get(complement) + 1, i + 1]",
+    "[seen.get(complement), i]"
   );
 
   const resRunFixed = await fetch(`${apiBase}/problems/two-sum/run`, {

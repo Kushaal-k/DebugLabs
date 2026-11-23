@@ -48,7 +48,7 @@ export function DsaProblemTab({
 
   return (
     <div className="flex h-full flex-1 select-text flex-col overflow-hidden text-[#ededed]">
-      <div className="z-20 shrink-0 border-b border-white/[0.08] bg-white/[0.02] backdrop-blur-xl p-4">
+      <div className="z-20 shrink-0 border-b border-white/[0.08] bg-black/40 p-4">
         <div className="mb-2.5 flex items-center justify-between gap-3">
           <h1 className="truncate text-sm font-semibold tracking-tight text-[#ededed]">
             {currentProblem.title}
@@ -74,9 +74,9 @@ export function DsaProblemTab({
               <div
                 role="listbox"
                 aria-label="Problems"
-                className="glass absolute right-0 z-30 mt-1.5 w-56 rounded-2xl py-1.5"
+                className="glass-dropdown absolute right-0 z-50 mt-1.5 w-56 rounded-2xl py-1.5"
               >
-                <div className="mb-1 border-b border-white/[0.06] px-3 py-1 text-[11px] font-medium tracking-wide text-[#85858b]">
+                <div className="mb-1 border-b border-white/[0.08] px-3 py-1 text-[11px] font-medium tracking-wide text-[#85858b]">
                   Problems
                 </div>
                 <div className="custom-scrollbar max-h-64 space-y-0.5 overflow-y-auto p-1">
@@ -95,8 +95,8 @@ export function DsaProblemTab({
                         }}
                         className={`flex w-full cursor-pointer items-center justify-between gap-2 rounded-xl px-2.5 py-1.5 text-left text-xs transition-colors ${
                           isSelected
-                            ? 'bg-white/[0.1] font-medium text-[#ededed]'
-                            : 'text-[#a1a1a6] hover:bg-white/[0.06] hover:text-[#ededed]'
+                            ? 'bg-white/[0.12] font-medium text-[#ededed]'
+                            : 'text-[#a1a1a6] hover:bg-white/[0.08] hover:text-[#ededed]'
                         }`}
                       >
                         <span className="truncate">{problem.title}</span>

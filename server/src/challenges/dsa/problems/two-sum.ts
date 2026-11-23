@@ -44,7 +44,30 @@ export const TWO_SUM_PROBLEM: DsaProblem = {
     "Exactly one valid solution exists.",
   ],
   starterCode: {
-    javascript: `import fs from "node:fs";
+    javascript: `// User function Template for javascript
+
+class Solution {
+  /**
+   * @param {number[]} nums
+   * @param {number} target
+   * @return {number[]}
+   */
+  twoSum(nums, target) {
+    const seen = new Map();
+    for (let i = 0; i < nums.length; i++) {
+      const complement = target - nums[i];
+      if (seen.has(complement)) {
+        return [seen.get(complement) + 1, i + 1];
+      }
+      seen.set(nums[i], i);
+    }
+    return [];
+  }
+}
+
+//{ Driver Code Starts
+// Initial Template for javascript
+import fs from "node:fs";
 
 function main() {
   const input = fs.readFileSync(0, "utf-8").trim().split(/\\s+/);
@@ -53,20 +76,31 @@ function main() {
   const target = parseInt(input[1], 10);
   const nums = input.slice(2, 2 + n).map(Number);
 
-  const seen = new Map();
-  for (let i = 0; i < nums.length; i++) {
-    const complement = target - nums[i];
-    if (seen.has(complement)) {
-      console.log(\`\${seen.get(complement) + 1} \${i + 1}\`);
-      return;
-    }
-    seen.set(nums[i], i);
+  const solution = new Solution();
+  const res = solution.twoSum(nums, target);
+  if (Array.isArray(res) && res.length === 2) {
+    console.log(\`\${res[0]} \${res[1]}\`);
   }
 }
 
 main();
+//} Driver Code Ends
 `,
-    python: `import sys
+    python: `# User function Template for python3
+
+class Solution:
+    def twoSum(self, nums: list[int], target: int) -> list[int]:
+        seen = {}
+        for i, num in enumerate(nums):
+            complement = target - num
+            if complement in seen:
+                return [seen[complement] + 1, i + 1]
+            seen[num] = i
+        return []
+
+# { Driver Code Starts
+# Initial Template for python3
+import sys
 
 def main():
     input_data = sys.stdin.read().split()
@@ -76,21 +110,39 @@ def main():
     target = int(input_data[1])
     nums = [int(x) for x in input_data[2:2 + n]]
 
-    seen = {}
-    for i, num in enumerate(nums):
-        complement = target - num
-        if complement in seen:
-            print(f"{seen[complement] + 1} {i + 1}")
-            return
-        seen[num] = i
+    solution = Solution()
+    res = solution.twoSum(nums, target)
+    if res and len(res) == 2:
+        print(f"{res[0]} {res[1]}")
 
 if __name__ == "__main__":
     main()
+# } Driver Code Ends
 `,
-    cpp: `#include <iostream>
+    cpp: `// User function Template for C++
+
 #include <vector>
 #include <unordered_map>
 using namespace std;
+
+class Solution {
+public:
+    vector<int> twoSum(vector<int>& nums, int target) {
+        unordered_map<int, int> seen;
+        for (int i = 0; i < nums.size(); i++) {
+            int complement = target - nums[i];
+            if (seen.count(complement)) {
+                return {seen[complement] + 1, i + 1};
+            }
+            seen[nums[i]] = i;
+        }
+        return {};
+    }
+};
+
+//{ Driver Code Starts
+// Initial Template for C++
+#include <iostream>
 
 int main() {
     int n, target;
@@ -98,20 +150,35 @@ int main() {
     vector<int> nums(n);
     for (int i = 0; i < n; i++) cin >> nums[i];
 
-    unordered_map<int, int> seen;
-    for (int i = 0; i < n; i++) {
-        int complement = target - nums[i];
-        if (seen.count(complement)) {
-            cout << seen[complement] + 1 << " " << i + 1 << "\\n";
-            return 0;
-        }
-        seen[nums[i]] = i;
+    Solution solution;
+    vector<int> res = solution.twoSum(nums, target);
+    if (res.size() == 2) {
+        cout << res[0] << " " << res[1] << "\\n";
     }
     return 0;
 }
+//} Driver Code Ends
 `,
-    java: `import java.util.*;
+    java: `// User function Template for Java
 
+import java.util.*;
+
+class Solution {
+    public int[] twoSum(int[] nums, int target) {
+        Map<Integer, Integer> seen = new HashMap<>();
+        for (int i = 0; i < nums.length; i++) {
+            int complement = target - nums[i];
+            if (seen.containsKey(complement)) {
+                return new int[] { seen.get(complement) + 1, i + 1 };
+            }
+            seen.put(nums[i], i);
+        }
+        return new int[0];
+    }
+}
+
+//{ Driver Code Starts
+// Initial Template for Java
 public class Main {
     public static void main(String[] args) {
         Scanner sc = new Scanner(System.in);
@@ -123,17 +190,14 @@ public class Main {
             nums[i] = sc.nextInt();
         }
 
-        Map<Integer, Integer> seen = new HashMap<>();
-        for (int i = 0; i < n; i++) {
-            int complement = target - nums[i];
-            if (seen.containsKey(complement)) {
-                System.out.println((seen.get(complement) + 1) + " " + (i + 1));
-                return;
-            }
-            seen.put(nums[i], i);
+        Solution solution = new Solution();
+        int[] res = solution.twoSum(nums, target);
+        if (res != null && res.length == 2) {
+            System.out.println(res[0] + " " + res[1]);
         }
     }
 }
+//} Driver Code Ends
 `,
   },
   testCases,

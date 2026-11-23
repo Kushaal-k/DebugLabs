@@ -42,7 +42,36 @@ export const BINARY_SEARCH_PROBLEM: DsaProblem = {
     "nums is sorted in ascending order.",
   ],
   starterCode: {
-    javascript: `import fs from "node:fs";
+    javascript: `// User function Template for javascript
+
+class Solution {
+  /**
+   * @param {number[]} nums
+   * @param {number} target
+   * @return {number}
+   */
+  search(nums, target) {
+    let left = 0;
+    let right = nums.length - 1;
+
+    while (left < right) {
+      const mid = Math.floor(left + (right - left) / 2);
+      if (nums[mid] === target) {
+        return mid;
+      } else if (nums[mid] < target) {
+        left = mid + 1;
+      } else {
+        right = mid - 1;
+      }
+    }
+
+    return -1;
+  }
+}
+
+//{ Driver Code Starts
+// Initial Template for javascript
+import fs from "node:fs";
 
 function main() {
   const input = fs.readFileSync(0, "utf-8").trim().split(/\\s+/);
@@ -51,28 +80,34 @@ function main() {
   const target = parseInt(input[1], 10);
   const nums = input.slice(2, 2 + n).map(Number);
 
-  let left = 0;
-  let right = n - 1;
-  let ans = -1;
-
-  while (left < right) {
-    const mid = Math.floor(left + (right - left) / 2);
-    if (nums[mid] === target) {
-      ans = mid;
-      break;
-    } else if (nums[mid] < target) {
-      left = mid + 1;
-    } else {
-      right = mid - 1;
-    }
-  }
-
-  console.log(ans);
+  const solution = new Solution();
+  console.log(solution.search(nums, target));
 }
 
 main();
+//} Driver Code Ends
 `,
-    python: `import sys
+    python: `# User function Template for python3
+
+class Solution:
+    def search(self, nums: list[int], target: int) -> int:
+        left, right = 0, len(nums) - 1
+        ans = -1
+
+        while left < right:
+            mid = left + (right - left) // 2
+            if nums[mid] == target:
+                return mid
+            elif nums[mid] < target:
+                left = mid + 1
+            else:
+                right = mid - 1
+
+        return ans
+
+# { Driver Code Starts
+# Initial Template for python3
+import sys
 
 def main():
     input_data = sys.stdin.read().split()
@@ -82,26 +117,41 @@ def main():
     target = int(input_data[1])
     nums = [int(x) for x in input_data[2:2 + n]]
 
-    left, right = 0, n - 1
-    ans = -1
-    while left < right:
-        mid = left + (right - left) // 2
-        if nums[mid] == target:
-            ans = mid
-            break
-        elif nums[mid] < target:
-            left = mid + 1
-        else:
-            right = mid - 1
-
-    print(ans)
+    solution = Solution()
+    print(solution.search(nums, target))
 
 if __name__ == "__main__":
     main()
+# } Driver Code Ends
 `,
-    cpp: `#include <iostream>
+    cpp: `// User function Template for C++
+
 #include <vector>
 using namespace std;
+
+class Solution {
+public:
+    int search(vector<int>& nums, int target) {
+        int left = 0, right = (int)nums.size() - 1;
+
+        while (left < right) {
+            int mid = left + (right - left) / 2;
+            if (nums[mid] == target) {
+                return mid;
+            } else if (nums[mid] < target) {
+                left = mid + 1;
+            } else {
+                right = mid - 1;
+            }
+        }
+
+        return -1;
+    }
+};
+
+//{ Driver Code Starts
+// Initial Template for C++
+#include <iostream>
 
 int main() {
     int n, target;
@@ -109,24 +159,36 @@ int main() {
     vector<int> nums(n);
     for (int i = 0; i < n; i++) cin >> nums[i];
 
-    int left = 0, right = n - 1;
-    int ans = -1;
-    while (left < right) {
-        int mid = left + (right - left) / 2;
-        if (nums[mid] == target) {
-            ans = mid;
-            break;
-        } else if (nums[mid] < target) {
-            left = mid + 1;
-        } else {
-            right = mid - 1;
-        }
-    }
-    cout << ans << "\\n";
+    Solution solution;
+    cout << solution.search(nums, target) << "\\n";
     return 0;
 }
+//} Driver Code Ends
 `,
-    java: `import java.util.*;
+    java: `// User function Template for Java
+
+class Solution {
+    public int search(int[] nums, int target) {
+        int left = 0, right = nums.length - 1;
+
+        while (left < right) {
+            int mid = left + (right - left) / 2;
+            if (nums[mid] == target) {
+                return mid;
+            } else if (nums[mid] < target) {
+                left = mid + 1;
+            } else {
+                right = mid - 1;
+            }
+        }
+
+        return -1;
+    }
+}
+
+//{ Driver Code Starts
+// Initial Template for Java
+import java.util.*;
 
 public class Main {
     public static void main(String[] args) {
@@ -139,22 +201,11 @@ public class Main {
             nums[i] = sc.nextInt();
         }
 
-        int left = 0, right = n - 1;
-        int ans = -1;
-        while (left < right) {
-            int mid = left + (right - left) / 2;
-            if (nums[mid] == target) {
-                ans = mid;
-                break;
-            } else if (nums[mid] < target) {
-                left = mid + 1;
-            } else {
-                right = mid - 1;
-            }
-        }
-        System.out.println(ans);
+        Solution solution = new Solution();
+        System.out.println(solution.search(nums, target));
     }
 }
+//} Driver Code Ends
 `,
   },
   testCases,

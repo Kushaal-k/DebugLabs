@@ -61,8 +61,8 @@ export function LanguageSelector({
       </button>
 
       {isOpen && (
-        <div className="glass absolute right-0 z-50 mt-2 w-48 rounded-2xl py-1.5">
-          <div className="mb-1 border-b border-white/[0.06] px-3 py-1 text-[11px] font-medium tracking-wide text-[#85858b]">
+        <div className="glass-dropdown absolute right-0 z-50 mt-2 w-48 rounded-2xl py-1.5">
+          <div className="mb-1 border-b border-white/[0.08] px-3 py-1 text-[11px] font-medium tracking-wide text-[#85858b]">
             Language
           </div>
           <div className="space-y-0.5 p-1">
@@ -75,8 +75,8 @@ export function LanguageSelector({
                   onClick={() => handleSelect(option)}
                   className={`flex w-full cursor-pointer items-center justify-between rounded-xl px-2.5 py-1.5 text-left text-xs transition-colors ${
                     isSelected
-                      ? 'bg-white/[0.1] font-medium text-[#ededed]'
-                      : 'text-[#a1a1a6] hover:bg-white/[0.06] hover:text-[#ededed]'
+                      ? 'bg-white/[0.12] font-medium text-[#ededed]'
+                      : 'text-[#a1a1a6] hover:bg-white/[0.08] hover:text-[#ededed]'
                   }`}
                 >
                   <div className="flex items-center gap-2">

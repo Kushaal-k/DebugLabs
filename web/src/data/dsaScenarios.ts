@@ -70,25 +70,47 @@ You can return the answer in any order.`,
       'Only one valid answer exists.',
     ],
     starterCode: {
-      javascript: `/**
- * @param {number[]} nums
- * @param {number} target
- * @return {number[]}
- */
-function twoSum(nums, target) {
-  const map = new Map();
-  for (let i = 0; i < nums.length; i++) {
-    const diff = target - nums[i];
-    if (map.has(diff)) {
-      return [map.get(diff), i];
+      javascript: `// User function Template for javascript
+
+class Solution {
+  /**
+   * @param {number[]} nums
+   * @param {number} target
+   * @return {number[]}
+   */
+  twoSum(nums, target) {
+    const map = new Map();
+    for (let i = 0; i < nums.length; i++) {
+      const diff = target - nums[i];
+      if (map.has(diff)) {
+        return [map.get(diff), i];
+      }
+      map.set(nums[i], i);
     }
-    map.set(nums[i], i);
+    return [];
   }
-  return [];
 }
 
-// Example test run:
-console.log("Output:", twoSum([2, 7, 11, 15], 9));
+//{ Driver Code Starts
+// Initial Template for javascript
+import fs from "node:fs";
+
+function main() {
+  const input = fs.readFileSync(0, "utf-8").trim().split(/\\s+/);
+  if (!input[0]) return;
+  const n = parseInt(input[0], 10);
+  const target = parseInt(input[1], 10);
+  const nums = input.slice(2, 2 + n).map(Number);
+
+  const solution = new Solution();
+  const res = solution.twoSum(nums, target);
+  if (Array.isArray(res) && res.length === 2) {
+    console.log(\`\${res[0]} \${res[1]}\`);
+  }
+}
+
+main();
+//} Driver Code Ends
 `,
       python: `from typing import List
 
@@ -209,24 +231,41 @@ An **Anagram** is a word or phrase formed by rearranging the letters of a differ
       's and t consist of lowercase English letters.',
     ],
     starterCode: {
-      javascript: `/**
- * @param {string} s
- * @param {string} t
- * @return {boolean}
- */
-function isAnagram(s, t) {
-  if (s.length !== t.length) return false;
-  const count = {};
-  for (const c of s) count[c] = (count[c] || 0) + 1;
-  for (const c of t) {
-    if (!count[c]) return false;
-    count[c]--;
+      javascript: `// User function Template for javascript
+
+class Solution {
+  /**
+   * @param {string} s
+   * @param {string} t
+   * @return {boolean}
+   */
+  isAnagram(s, t) {
+    if (s.length !== t.length) return false;
+    const count = {};
+    for (const c of s) count[c] = (count[c] || 0) + 1;
+    for (const c of t) {
+      if (!count[c]) return false;
+      count[c]--;
+    }
+    return true;
   }
-  return true;
 }
 
-// Example test run:
-console.log("Output:", isAnagram("anagram", "nagaram"));
+//{ Driver Code Starts
+// Initial Template for javascript
+import fs from "node:fs";
+
+function main() {
+  const words = fs.readFileSync(0, "utf-8").trim().split(/\\s+/);
+  if (words.length < 2) return;
+  const [s, t] = words;
+
+  const solution = new Solution();
+  console.log(solution.isAnagram(s, t) ? "true" : "false");
+}
+
+main();
+//} Driver Code Ends
 `,
       python: `class Solution:
     def isAnagram(self, s: str, t: str) -> bool:
