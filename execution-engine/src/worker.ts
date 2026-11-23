@@ -37,12 +37,11 @@ worker.on("failed", (job, err) => {
     console.error(`[Worker] Job ${job?.id} failed:`, err);
 });
 
-let lastRedisWarn = 0;
+let hasLoggedRedisWorker = false;
 worker.on("error", (err) => {
-    const now = Date.now();
-    if (now - lastRedisWarn > 10000) {
-        lastRedisWarn = now;
-        console.warn(`[execution-engine worker] Redis is offline (${err.message}). Background queue is paused, direct execution remains active.`);
+    if (!hasLoggedRedisWorker) {
+        hasLoggedRedisWorker = true;
+        console.info(`[execution-engine] Redis is offline (${err.message}). Background queue worker idle, direct execution active.`);
     }
 });
 

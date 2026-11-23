@@ -9,6 +9,11 @@ const host = process.env.HOST ?? "0.0.0.0";
 
 app.use(express.json());
 
+app.get("/", (_req, res) => {
+  const webUrl = process.env.WEB_URL ?? "http://localhost:5173";
+  res.redirect(webUrl);
+});
+
 app.get("/health", (_req, res) => {
   const result: ServiceStatus = {
     service: "execution-engine",
