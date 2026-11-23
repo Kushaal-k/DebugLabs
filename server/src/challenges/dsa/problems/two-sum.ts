@@ -57,7 +57,6 @@ function main() {
   for (let i = 0; i < nums.length; i++) {
     const complement = target - nums[i];
     if (seen.has(complement)) {
-      // BUG: 1-based indexing instead of 0-based!
       console.log(\`\${seen.get(complement) + 1} \${i + 1}\`);
       return;
     }
@@ -81,7 +80,6 @@ def main():
     for i, num in enumerate(nums):
         complement = target - num
         if complement in seen:
-            # BUG: 1-based indexing instead of 0-based!
             print(f"{seen[complement] + 1} {i + 1}")
             return
         seen[num] = i
@@ -104,7 +102,6 @@ int main() {
     for (int i = 0; i < n; i++) {
         int complement = target - nums[i];
         if (seen.count(complement)) {
-            // BUG: 1-based indexing instead of 0-based!
             cout << seen[complement] + 1 << " " << i + 1 << "\\n";
             return 0;
         }
@@ -130,7 +127,6 @@ public class Main {
         for (int i = 0; i < n; i++) {
             int complement = target - nums[i];
             if (seen.containsKey(complement)) {
-                // BUG: 1-based indexing instead of 0-based!
                 System.out.println((seen.get(complement) + 1) + " " + (i + 1));
                 return;
             }

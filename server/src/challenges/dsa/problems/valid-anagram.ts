@@ -48,9 +48,6 @@ function main() {
   if (words.length < 2) return;
   const [s, t] = words;
 
-  // BUG: Missing length check! If s and t have different lengths, false positives occur
-  // if (s.length !== t.length) { console.log("false"); return; }
-
   const counts = {};
   for (const c of s) counts[c] = (counts[c] || 0) + 1;
   for (const c of t) {
@@ -73,11 +70,6 @@ def main():
     if len(words) < 2:
         return
     s, t = words[0], words[1]
-
-    # BUG: Missing length check! If s and t have different lengths, false positives occur
-    # if len(s) != len(t):
-    #     print("false")
-    #     return
 
     counts = {}
     for c in s:
@@ -102,9 +94,6 @@ int main() {
     string s, t;
     if (!(cin >> s >> t)) return 0;
 
-    // BUG: Missing length check! If s and t have different lengths, false positives occur
-    // if (s.length() != t.length()) { cout << "false\\n"; return 0; }
-
     unordered_map<char, int> counts;
     for (char c : s) counts[c]++;
     for (char c : t) {
@@ -127,9 +116,6 @@ public class Main {
         String s = sc.next();
         if (!sc.hasNext()) return;
         String t = sc.next();
-
-        // BUG: Missing length check!
-        // if (s.length() != t.length()) { System.out.println("false"); return; }
 
         Map<Character, Integer> counts = new HashMap<>();
         for (char c : s.toCharArray()) counts.put(c, counts.getOrDefault(c, 0) + 1);

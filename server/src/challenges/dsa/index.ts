@@ -60,8 +60,6 @@ export function getDsaProblemForClient(id: string): DsaProblem | null {
     category: problem.category,
     tags: problem.tags,
     description: problem.description,
-    bugDescription: problem.bugDescription,
-    hints: problem.hints,
     entrypointMethod: problem.entrypointMethod,
     examples: problem.examples,
     constraints: problem.constraints,

@@ -62,7 +62,7 @@ export function TestResultTab({
               <span>{isSubmission ? 'Submission accepted' : 'Passed'}</span>
             </div>
           ) : (
-            <div className="flex items-center gap-1.5 text-rose-400 font-medium text-xs">
+            <div className="flex items-center gap-1.5 text-[#c98b92] font-medium text-xs">
               <XCircle className="w-4 h-4 stroke-[1.5]" />
               <span>{verdict}</span>
             </div>
@@ -96,8 +96,8 @@ export function TestResultTab({
                 }`}
               >
                 <span
-                  className={`w-1.5 h-1.5 rounded-full ${
-                    res.passed ? 'bg-[#4cc38a]' : 'bg-rose-400'
+                  className={`h-1.5 w-1.5 rounded-full ${
+                    res.passed ? 'bg-[#4cc38a]' : 'bg-white/30'
                   }`}
                 />
                 <span>{res.testCaseName || (res.hidden ? `Hidden ${idx + 1}` : `Case ${idx + 1}`)}</span>
@@ -111,7 +111,7 @@ export function TestResultTab({
       {activeResult && (
         <div className="flex-1 p-3.5 overflow-y-auto space-y-2.5 font-mono text-xs">
           {activeResult.errorMessage && (
-            <div className="flex items-start gap-2 rounded-xl border border-rose-500/20 bg-rose-500/10 p-2.5 text-xs text-rose-400 backdrop-blur-md">
+            <div className="flex items-start gap-2 rounded-xl border border-white/[0.08] bg-white/[0.03] p-2.5 text-xs text-[#c8c8ce]">
               <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 stroke-[1.5]" />
               <div className="whitespace-pre-wrap">{activeResult.errorMessage}</div>
             </div>
@@ -121,13 +121,7 @@ export function TestResultTab({
             <div className="font-sans text-[11px] font-medium text-[#85858b]">
               Your output
             </div>
-            <div
-              className={`rounded-lg border bg-black/40 px-3 py-1.5 font-mono text-xs ${
-                activeResult.passed
-                  ? 'border-white/[0.08] text-[#ededed]'
-                  : 'border-rose-500/25 bg-rose-500/[0.04] text-rose-300'
-              }`}
-            >
+            <div className="rounded-lg border border-white/[0.08] bg-black/40 px-3 py-1.5 font-mono text-xs text-[#ededed]">
               {activeResult.actualOutput || (activeResult.passed ? '(Empty output)' : '(No output)')}
             </div>
           </div>

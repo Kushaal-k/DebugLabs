@@ -54,9 +54,6 @@ function main() {
     idx += 2;
   }
 
-  // BUG: Forgot to sort intervals by start time!
-  // intervals.sort((a, b) => a[0] - b[0]);
-
   const merged = [intervals[0]];
   for (let i = 1; i < intervals.length; i++) {
     const prev = merged[merged.length - 1];
@@ -88,9 +85,6 @@ def main():
         intervals.append([int(input_data[idx]), int(input_data[idx + 1])])
         idx += 2
 
-    # BUG: Forgot to sort intervals by start time!
-    # intervals.sort(key=lambda x: x[0])
-
     merged = [intervals[0]]
     for curr in intervals[1:]:
         prev = merged[-1]
@@ -117,9 +111,6 @@ int main() {
     for (int i = 0; i < n; i++) {
         cin >> intervals[i].first >> intervals[i].second;
     }
-
-    // BUG: Forgot to sort intervals by start time!
-    // sort(intervals.begin(), intervals.end());
 
     vector<pair<int, int>> merged;
     merged.push_back(intervals[0]);
@@ -151,9 +142,6 @@ public class Main {
             intervals[i][0] = sc.nextInt();
             intervals[i][1] = sc.nextInt();
         }
-
-        // BUG: Forgot to sort intervals by start time!
-        // Arrays.sort(intervals, (a, b) -> Integer.compare(a[0], b[0]));
 
         List<int[]> merged = new ArrayList<>();
         merged.add(intervals[0]);

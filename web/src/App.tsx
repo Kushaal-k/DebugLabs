@@ -74,7 +74,7 @@ export default function App() {
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 
   // Panel sizing and resizer states
-  const [leftWidth, setLeftWidth] = useState<number>(380);
+  const [leftWidth, setLeftWidth] = useState<number>(520);
   const [bottomHeight, setBottomHeight] = useState<number>(300);
   const [isDraggingH, setIsDraggingH] = useState<boolean>(false);
   const [isDraggingV, setIsDraggingV] = useState<boolean>(false);
