@@ -89,13 +89,6 @@ export function OutputTerminal({
             <span>Test result</span>
           </button>
           </div>
-
-          {(isDsaRunning || isSubmitting) && (
-            <span className="flex items-center gap-2 text-xs text-[#a1a1a6] ml-3">
-              <span className="w-1.5 h-1.5 rounded-full bg-[#4cc38a] inline-block shadow-[0_0_8px_rgba(76,195,138,0.5)]" />
-              <span>{isSubmitting ? 'Grading…' : 'Running tests…'}</span>
-            </span>
-          )}
         </div>
 
         <div className="flex items-center gap-1">
