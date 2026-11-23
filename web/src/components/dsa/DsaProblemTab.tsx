@@ -48,7 +48,7 @@ export function DsaProblemTab({
 
   return (
     <div className="flex h-full flex-1 select-text flex-col overflow-hidden text-[#ededed]">
-      <div className="z-20 shrink-0 border-b border-white/[0.08] bg-[#101014] p-4">
+      <div className="z-20 shrink-0 border-b border-white/[0.08] bg-white/[0.02] backdrop-blur-xl p-4">
         <div className="mb-2.5 flex items-center justify-between gap-3">
           <h1 className="truncate text-sm font-semibold tracking-tight text-[#ededed]">
             {currentProblem.title}
