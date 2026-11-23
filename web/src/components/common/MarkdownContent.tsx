@@ -143,7 +143,7 @@ function renderInlineMarkdown(text: string): React.ReactNode {
       return (
         <code
           key={index}
-          className="text-[#ededed] bg-white/[0.06] border border-white/[0.08] px-1.5 py-0.5 rounded-[4px] font-mono text-[11.5px] mx-0.5"
+          className="mx-0.5 rounded-md border border-white/10 bg-white/[0.06] px-1.5 py-0.5 font-mono text-[11.5px] text-[#ededed]"
         >
           {codeText}
         </code>

@@ -57,59 +57,38 @@ export function OutputTerminal({
 
   return (
     <section
-      style={{ height: isCollapsed ? 40 : height }}
-      className="bg-[#0f0f12]/60 backdrop-blur-xl border-t border-white/[0.08] flex flex-col shrink-0 select-none shadow-[0_-4px_30px_rgba(0,0,0,0.3)] transition-[height] duration-75"
+      style={{ height: isCollapsed ? 44 : height }}
+      className="glass-panel flex shrink-0 select-none flex-col overflow-hidden rounded-2xl transition-[height] duration-75"
     >
-      <div className="h-10 bg-white/[0.02] backdrop-blur-md border-b border-white/[0.08] flex items-center justify-between text-xs pr-3">
-        <div className="flex items-center h-full">
-          {/* Test Cases Tab */}
+      <div className="flex h-11 items-center justify-between border-b border-white/[0.08] px-3 text-xs">
+        <div className="flex h-full items-center gap-2">
+          <div className="flex items-center gap-0.5 rounded-full border border-white/[0.08] bg-black/20 p-0.5">
           <button
             type="button"
             onClick={() => setTab('testcases')}
-            className={`h-full flex items-center gap-2 px-4 text-xs border-r cursor-pointer transition-colors ${
+            className={`flex h-7 cursor-pointer items-center gap-1.5 rounded-full px-3 text-xs transition-colors ${
               currentTab === 'testcases'
-                ? 'bg-white/[0.06] text-[#ededed] border-r-white/[0.08] font-medium'
-                : 'text-[#85858b] border-r-white/[0.06] hover:text-[#ededed] hover:bg-white/[0.03]'
+                ? 'bg-white/[0.14] font-medium text-[#ededed] shadow-[inset_0_1px_0_rgba(255,255,255,0.14)]'
+                : 'text-[#85858b] hover:text-[#ededed]'
             }`}
           >
-            <FlaskConical className="w-3.5 h-3.5 stroke-[1.5]" />
+            <FlaskConical className="h-3.5 w-3.5 stroke-[1.5]" />
             <span>Test cases</span>
           </button>
 
-          {/* Test Result Tab */}
           <button
             type="button"
             onClick={() => setTab('results')}
-            className={`h-full flex items-center gap-2 px-4 text-xs border-r cursor-pointer transition-colors ${
+            className={`flex h-7 cursor-pointer items-center gap-1.5 rounded-full px-3 text-xs transition-colors ${
               currentTab === 'results'
-                ? 'bg-white/[0.06] text-[#ededed] border-r-white/[0.08] font-medium'
-                : 'text-[#85858b] border-r-white/[0.06] hover:text-[#ededed] hover:bg-white/[0.03]'
+                ? 'bg-white/[0.14] font-medium text-[#ededed] shadow-[inset_0_1px_0_rgba(255,255,255,0.14)]'
+                : 'text-[#85858b] hover:text-[#ededed]'
             }`}
           >
             <ListChecks className="w-3.5 h-3.5 stroke-[1.5]" />
             <span>Test result</span>
-            {dsaSubmissionResult ? (
-              <span
-                className={`text-[10px] px-1.5 py-0.5 rounded-md font-mono tabular-nums backdrop-blur-sm ${
-                  dsaSubmissionResult.status === 'Accepted'
-                    ? 'bg-emerald-500/10 text-[#4cc38a] border border-emerald-500/20'
-                    : 'bg-rose-500/10 text-rose-400 border border-rose-500/20'
-                }`}
-              >
-                {dsaSubmissionResult.passedCount}/{dsaSubmissionResult.totalCount}
-              </span>
-            ) : dsaRunSummary ? (
-              <span
-                className={`text-[10px] px-1.5 py-0.5 rounded-md font-mono tabular-nums backdrop-blur-sm ${
-                  dsaRunSummary.status === 'passed'
-                    ? 'bg-emerald-500/10 text-[#4cc38a] border border-emerald-500/20'
-                    : 'bg-rose-500/10 text-rose-400 border border-rose-500/20'
-                }`}
-              >
-                {dsaRunSummary.passed}/{dsaRunSummary.total}
-              </span>
-            ) : null}
           </button>
+          </div>
 
           {(isDsaRunning || isSubmitting) && (
             <span className="flex items-center gap-2 text-xs text-[#a1a1a6] ml-3">
@@ -123,7 +102,7 @@ export function OutputTerminal({
           <button
             type="button"
             onClick={() => setIsCollapsed((prev) => !prev)}
-            className="p-1.5 text-[#85858b] hover:text-[#ededed] hover:bg-white/[0.06] rounded-md cursor-pointer transition-colors backdrop-blur-sm"
+            className="cursor-pointer rounded-full p-1.5 text-[#85858b] transition-colors hover:bg-white/[0.08] hover:text-[#ededed]"
             title={isCollapsed ? 'Expand panel' : 'Collapse panel'}
           >
             {isCollapsed ? (

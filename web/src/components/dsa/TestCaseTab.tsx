@@ -23,10 +23,9 @@ export function TestCaseTab({
     testCases.find((tc) => tc.id === activeCaseId) || testCases[0];
 
   return (
-    <div className="flex-1 flex flex-col h-full bg-[#0d0d10]/60 backdrop-blur-xl text-[#ededed] overflow-hidden">
-      {/* Test Case Selector */}
-      <div className="h-10 px-4 bg-white/[0.02] backdrop-blur-md border-b border-white/[0.08] flex items-center shrink-0">
-        <div className="flex items-center gap-1.5 overflow-x-auto custom-scrollbar">
+    <div className="flex h-full flex-1 flex-col overflow-hidden text-[#ededed]">
+      <div className="flex h-10 shrink-0 items-center border-b border-white/[0.08] px-4">
+        <div className="custom-scrollbar flex items-center gap-1.5 overflow-x-auto">
           {testCases.map((tc, index) => {
             const isSelected = tc.id === activeCase?.id;
             return (
@@ -34,10 +33,10 @@ export function TestCaseTab({
                 key={tc.id}
                 type="button"
                 onClick={() => setActiveCaseId(tc.id)}
-                className={`h-7 flex items-center gap-1.5 px-3 text-xs rounded-lg cursor-pointer transition-all ${
+                className={`flex h-7 cursor-pointer items-center gap-1.5 rounded-full px-3 text-xs transition-colors ${
                   isSelected
-                    ? 'bg-white/[0.1] text-[#ededed] font-medium border border-white/[0.14] backdrop-blur-sm shadow-sm'
-                    : 'text-[#85858b] hover:text-[#ededed] hover:bg-white/[0.04]'
+                    ? 'border border-white/[0.12] bg-white/[0.1] font-medium text-[#ededed]'
+                    : 'text-[#85858b] hover:bg-white/[0.05] hover:text-[#ededed]'
                 }`}
               >
                 <span>{tc.name || `Case ${index + 1}`}</span>
@@ -64,7 +63,7 @@ export function TestCaseTab({
           <button
             type="button"
             onClick={onAddTestCase}
-            className="h-7 flex items-center gap-1 text-xs text-[#85858b] hover:text-[#ededed] px-2.5 rounded-lg hover:bg-white/[0.04] transition-colors cursor-pointer"
+            className="flex h-7 cursor-pointer items-center gap-1 rounded-full px-2.5 text-xs text-[#85858b] transition-colors hover:bg-white/[0.06] hover:text-[#ededed]"
             title="Add test case"
           >
             <Plus className="w-3.5 h-3.5 stroke-[1.5]" />
@@ -75,9 +74,9 @@ export function TestCaseTab({
 
       {/* Selected Case Fields */}
       {activeCase ? (
-        <div className="flex-1 p-4 overflow-y-auto space-y-4 font-mono text-xs">
-          <div className="bg-white/[0.02] backdrop-blur-md border border-white/[0.06] rounded-xl p-3.5 space-y-2">
-            <label className="block text-[11px] font-sans font-medium text-[#85858b]">
+        <div className="flex-1 space-y-3 overflow-y-auto p-3 font-mono text-xs">
+          <div className="glass-inset space-y-2 rounded-2xl p-3.5">
+            <label className="block font-sans text-[11px] font-medium text-[#85858b]">
               Input parameters
             </label>
             <input
@@ -87,12 +86,12 @@ export function TestCaseTab({
                 onUpdateTestCase({ ...activeCase, input: e.target.value })
               }
               placeholder="nums = [2, 7, 11, 15], target = 9"
-              className="w-full bg-black/40 backdrop-blur-md border border-white/[0.08] focus:border-white/[0.2] rounded-lg px-3 py-2 text-[#ededed] font-mono text-xs outline-none transition-colors focus:ring-1 focus:ring-white/[0.1]"
+              className="w-full rounded-xl border border-white/[0.08] bg-black/35 px-3 py-2 font-mono text-xs text-[#ededed] outline-none transition-colors focus:border-white/25 focus:ring-1 focus:ring-white/10"
             />
           </div>
 
-          <div className="bg-white/[0.02] backdrop-blur-md border border-white/[0.06] rounded-xl p-3.5 space-y-2">
-            <label className="block text-[11px] font-sans font-medium text-[#85858b]">
+          <div className="glass-inset space-y-2 rounded-2xl p-3.5">
+            <label className="block font-sans text-[11px] font-medium text-[#85858b]">
               Expected output
             </label>
             <input
@@ -102,7 +101,7 @@ export function TestCaseTab({
                 onUpdateTestCase({ ...activeCase, expectedOutput: e.target.value })
               }
               placeholder="[0, 1]"
-              className="w-full bg-black/40 backdrop-blur-md border border-white/[0.08] focus:border-white/[0.2] rounded-lg px-3 py-2 text-[#ededed] font-mono text-xs outline-none transition-colors focus:ring-1 focus:ring-white/[0.1]"
+              className="w-full rounded-xl border border-white/[0.08] bg-black/35 px-3 py-2 font-mono text-xs text-[#ededed] outline-none transition-colors focus:border-white/25 focus:ring-1 focus:ring-white/10"
             />
           </div>
         </div>

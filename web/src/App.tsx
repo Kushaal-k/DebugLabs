@@ -10,6 +10,7 @@ import type {
   DsaSubmissionResult,
 } from './types/dsa';
 import type { SupportedLanguage } from '@debugLabs/shared';
+import { LabShell } from './components/common/LabShell';
 import { CodeEditor } from './components/editor/CodeEditor';
 import { EditorToolbar } from './components/editor/EditorToolbar';
 import {
@@ -74,7 +75,7 @@ export default function App() {
 
   // Panel sizing and resizer states
   const [leftWidth, setLeftWidth] = useState<number>(380);
-  const [bottomHeight, setBottomHeight] = useState<number>(260);
+  const [bottomHeight, setBottomHeight] = useState<number>(300);
   const [isDraggingH, setIsDraggingH] = useState<boolean>(false);
   const [isDraggingV, setIsDraggingV] = useState<boolean>(false);
 
@@ -349,80 +350,70 @@ export default function App() {
   }
 
   return (
-    <div className="flex flex-col h-screen w-screen bg-[#08080a] text-[#ededed] overflow-hidden relative select-none">
-      {/* Ambient gradient layer for glassmorphic depth */}
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_60%_at_50%_-10%,rgba(16,185,129,0.06),rgba(255,255,255,0))] pointer-events-none" />
+    <LabShell>
+      <div className="relative z-10 flex h-full flex-col gap-2.5 p-2.5 select-none">
+        <EditorToolbar
+          onBack={() => setShowDashboard(true)}
+          problemTitle={currentProblem.title}
+          difficulty={currentProblem.difficulty}
+          selectedLanguage={selectedLanguage}
+          onSelectLanguage={handleSelectLanguage}
+          onReset={handleReset}
+          onRunTestCases={handleRunTestCases}
+          isDsaRunning={isDsaRunning}
+          onSubmitSolution={handleSubmitSolution}
+          isSubmitting={isSubmitting}
+        />
 
-      <EditorToolbar
-        onBack={() => setShowDashboard(true)}
-        problemTitle={currentProblem.title}
-        difficulty={currentProblem.difficulty}
-        selectedLanguage={selectedLanguage}
-        onSelectLanguage={handleSelectLanguage}
-        onReset={handleReset}
-        onRunTestCases={handleRunTestCases}
-        isDsaRunning={isDsaRunning}
-        onSubmitSolution={handleSubmitSolution}
-        isSubmitting={isSubmitting}
-      />
-
-      <div className="flex flex-1 overflow-hidden relative z-10">
-        {/* Left Drawer: Problem Description */}
-        <aside
-          style={{ width: `${leftWidth}px` }}
-          className="bg-[#0c0c0f]/70 backdrop-blur-xl border-r border-white/[0.08] flex flex-col shrink-0 overflow-hidden shadow-[4px_0_24px_rgba(0,0,0,0.3)]"
-        >
-          <DsaProblemTab
-            currentProblem={currentProblem}
-            problems={problems}
-            onSelectProblem={handleSelectProblem}
-          />
-        </aside>
-
-        {/* Horizontal Resize Handle */}
-        <div
-          onMouseDown={startDraggingH}
-          className="w-1.5 cursor-col-resize relative flex items-center justify-center bg-transparent hover:bg-emerald-500/30 active:bg-emerald-500/50 transition-colors z-20 group shrink-0"
-          title="Drag to resize panel"
-        >
-          <div className="w-0.5 h-7 rounded-full bg-white/20 group-hover:bg-emerald-400 group-active:bg-emerald-300 transition-colors" />
-        </div>
-
-        {/* Right Workspace: Code Editor & Resizable Bottom Panel */}
-        <div className="flex-1 flex flex-col bg-[#0c0c0f]/40 backdrop-blur-md overflow-hidden relative">
-          <main className="flex-1 flex flex-col overflow-hidden relative">
-            <CodeEditor
-              file={activeFile}
-              onChange={handleCodeChange}
-            />
-          </main>
-
-          {/* Vertical Resize Handle */}
-          <div
-            onMouseDown={startDraggingV}
-            className="h-1.5 cursor-row-resize relative flex items-center justify-center bg-transparent hover:bg-emerald-500/30 active:bg-emerald-500/50 transition-colors z-20 group shrink-0"
-            title="Drag to resize panel"
+        <div className="flex min-h-0 flex-1">
+          <aside
+            style={{ width: `${leftWidth}px` }}
+            className="glass-panel flex h-full min-h-0 shrink-0 flex-col overflow-hidden rounded-2xl"
           >
-            <div className="h-0.5 w-7 rounded-full bg-white/20 group-hover:bg-emerald-400 group-active:bg-emerald-300 transition-colors" />
-          </div>
+            <DsaProblemTab
+              currentProblem={currentProblem}
+              problems={problems}
+              onSelectProblem={handleSelectProblem}
+            />
+          </aside>
 
-          <OutputTerminal
-            height={bottomHeight}
-            activeTab={bottomTab}
-            onTabChange={setBottomTab}
-            testCases={testCases}
-            onUpdateTestCase={handleUpdateTestCase}
-            onAddTestCase={handleAddTestCase}
-            onRemoveTestCase={handleRemoveTestCase}
-            dsaRunSummary={dsaRunSummary}
-            isDsaRunning={isDsaRunning}
-            dsaSubmissionResult={dsaSubmissionResult}
-            isSubmitting={isSubmitting}
+          <div
+            onMouseDown={startDraggingH}
+            className="lab-resize-col z-20"
+            title="Drag to resize panel"
           />
+
+          <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
+            <main className="glass-panel relative flex min-h-0 flex-1 flex-col overflow-hidden rounded-2xl">
+              <CodeEditor
+                file={activeFile}
+                onChange={handleCodeChange}
+              />
+            </main>
+
+            <div
+              onMouseDown={startDraggingV}
+              className="lab-resize-row z-20"
+              title="Drag to resize panel"
+            />
+
+            <OutputTerminal
+              height={bottomHeight}
+              activeTab={bottomTab}
+              onTabChange={setBottomTab}
+              testCases={testCases}
+              onUpdateTestCase={handleUpdateTestCase}
+              onAddTestCase={handleAddTestCase}
+              onRemoveTestCase={handleRemoveTestCase}
+              dsaRunSummary={dsaRunSummary}
+              isDsaRunning={isDsaRunning}
+              dsaSubmissionResult={dsaSubmissionResult}
+              isSubmitting={isSubmitting}
+            />
+          </div>
         </div>
       </div>
 
-      {/* Screen-wide Drag Overlay to prevent Monaco / text from intercepting mouse events */}
       {(isDraggingH || isDraggingV) && (
         <div
           className={`fixed inset-0 z-50 select-none ${
@@ -430,6 +421,6 @@ export default function App() {
           }`}
         />
       )}
-    </div>
+    </LabShell>
   );
 }

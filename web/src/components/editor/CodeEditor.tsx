@@ -47,20 +47,25 @@ export function CodeEditor({ file, onChange }: Props) {
         { token: 'type', foreground: 'ce93d8' },
       ],
       colors: {
-        'editor.background': '#0c0c0f',
+        'editor.background': '#101014',
         'editor.foreground': '#ededed',
-        'editor.lineHighlightBackground': '#141418',
-        'editorLineNumber.foreground': '#45454d',
+        'editor.lineHighlightBackground': '#ffffff0a',
+        'editorLineNumber.foreground': '#4a4a54',
         'editorLineNumber.activeForeground': '#ededed',
-        'editorGutter.background': '#0c0c0f',
+        'editorGutter.background': '#101014',
         'editor.selectionBackground': '#ffffff18',
-        'editorCursor.foreground': '#ededed',
+        'editorCursor.foreground': '#6ee7b7',
       },
     });
   };
 
   return (
-    <div className="flex-1 h-full flex flex-col bg-[#0c0c0f] overflow-hidden">
+    <div className="flex h-full flex-1 flex-col overflow-hidden bg-[#101014]">
+      <div className="flex h-9 shrink-0 items-center gap-2 border-b border-white/[0.06] px-4">
+        <span className="h-1.5 w-1.5 rounded-full bg-emerald-400/80" />
+        <span className="font-mono text-[12px] text-[#c8c8ce]">{file.name}</span>
+      </div>
+      <div className="min-h-0 flex-1">
       <Editor
         height="100%"
         language={language}
@@ -95,6 +100,7 @@ export function CodeEditor({ file, onChange }: Props) {
           </div>
         }
       />
+      </div>
     </div>
   );
 }

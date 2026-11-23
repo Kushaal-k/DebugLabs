@@ -36,29 +36,28 @@ export function EditorToolbar({
   };
 
   return (
-    <header className="h-12 bg-[#0c0c0f]/70 backdrop-blur-xl border-b border-white/[0.08] px-4 flex items-center justify-between select-none shrink-0 shadow-[0_4px_30px_rgba(0,0,0,0.25)] relative z-20">
-      {/* Left: Navigation and problem summary */}
-      <div className="flex items-center gap-3">
+    <header className="glass relative z-30 flex h-12 shrink-0 items-center justify-between rounded-full px-4 select-none">
+      <div className="flex min-w-0 items-center gap-2.5">
         <button
           type="button"
           onClick={onBack}
           disabled={isBusy}
-          className="h-8 flex items-center gap-2 text-xs text-[#a1a1a6] hover:text-[#ededed] px-2.5 rounded-lg hover:bg-white/[0.06] border border-transparent hover:border-white/[0.08] transition-all cursor-pointer disabled:opacity-40"
+          className="flex h-8 cursor-pointer items-center gap-1.5 rounded-full px-2.5 text-xs text-[#a1a1a6] transition-colors hover:bg-white/[0.08] hover:text-[#ededed] disabled:opacity-40"
           title="Return to questions list"
         >
-          <ArrowLeft className="w-4 h-4 stroke-[1.5]" />
-          <span>Problems</span>
+          <ArrowLeft className="h-3.5 w-3.5 stroke-[1.75]" />
+          <span>Labs</span>
         </button>
 
-        <div className="h-4 w-px bg-white/[0.08]" />
+        <div className="h-4 w-px bg-white/10" />
 
-        <div className="flex items-center gap-2.5">
-          <span className="text-[13px] font-medium text-[#ededed] tracking-tight">
+        <div className="flex min-w-0 items-center gap-2">
+          <span className="truncate text-[13px] font-medium tracking-tight text-[#ededed]">
             {problemTitle}
           </span>
           {difficulty && (
             <span
-              className={`text-[11px] font-medium px-2 py-0.5 rounded-md border backdrop-blur-sm ${
+              className={`shrink-0 rounded-full border px-2 py-0.5 text-[11px] font-medium ${
                 difficultyClasses[difficulty] || difficultyClasses.Easy
               }`}
             >
@@ -68,8 +67,7 @@ export function EditorToolbar({
         </div>
       </div>
 
-      {/* Right: Controls */}
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-1.5">
         <LanguageSelector
           selectedLanguage={selectedLanguage}
           onSelectLanguage={onSelectLanguage}
@@ -80,10 +78,10 @@ export function EditorToolbar({
           type="button"
           onClick={onReset}
           disabled={isBusy}
-          className="h-8 flex items-center gap-1.5 text-xs text-[#85858b] hover:text-[#ededed] px-2.5 rounded-lg hover:bg-white/[0.06] border border-transparent hover:border-white/[0.08] transition-all cursor-pointer disabled:opacity-40"
+          className="flex h-8 cursor-pointer items-center gap-1.5 rounded-full px-2.5 text-xs text-[#85858b] transition-colors hover:bg-white/[0.08] hover:text-[#ededed] disabled:opacity-40"
           title="Reset code to starter template"
         >
-          <RotateCcw className="w-3.5 h-3.5 stroke-[1.5]" />
+          <RotateCcw className="h-3.5 w-3.5 stroke-[1.75]" />
           <span className="hidden sm:inline">Reset</span>
         </button>
 
@@ -91,13 +89,13 @@ export function EditorToolbar({
           type="button"
           onClick={onRunTestCases}
           disabled={isBusy}
-          className="h-8 flex items-center gap-2 bg-white/[0.06] hover:bg-white/[0.1] border border-white/[0.1] text-[#ededed] font-medium text-xs px-3.5 rounded-lg transition-all cursor-pointer disabled:opacity-40 backdrop-blur-md shadow-sm"
+          className="glass-inset flex h-8 cursor-pointer items-center gap-1.5 rounded-full px-3.5 text-xs font-medium text-[#ededed] transition-colors hover:bg-white/[0.08] disabled:opacity-40"
           title="Run sample test cases"
         >
           {isDsaRunning ? (
-            <Loader2 className="w-3.5 h-3.5 animate-spin text-[#a1a1a6] stroke-[1.5]" />
+            <Loader2 className="h-3.5 w-3.5 animate-spin stroke-[1.75] text-[#a1a1a6]" />
           ) : (
-            <Play className="w-3.5 h-3.5 fill-current stroke-[1.5] text-[#a1a1a6]" />
+            <Play className="h-3.5 w-3.5 fill-current stroke-[1.75] text-[#c8c8ce]" />
           )}
           <span>{isDsaRunning ? 'Testing…' : 'Run'}</span>
         </button>
@@ -106,13 +104,13 @@ export function EditorToolbar({
           type="button"
           onClick={onSubmitSolution}
           disabled={isBusy}
-          className="h-8 flex items-center gap-1.5 bg-emerald-600/90 hover:bg-emerald-500 text-white font-medium text-xs px-3.5 rounded-lg transition-all cursor-pointer disabled:opacity-40 shadow-[0_0_15px_rgba(16,185,129,0.25)] border border-emerald-400/30"
+          className="flex h-8 cursor-pointer items-center gap-1.5 rounded-full border border-emerald-300/30 bg-emerald-400 px-3.5 text-xs font-medium text-emerald-950 shadow-[0_8px_24px_rgba(16,185,129,0.28)] transition-colors hover:bg-emerald-300 disabled:opacity-40"
           title="Submit solution for grading"
         >
           {isSubmitting ? (
-            <Loader2 className="w-3.5 h-3.5 animate-spin stroke-[1.5]" />
+            <Loader2 className="h-3.5 w-3.5 animate-spin stroke-[1.75]" />
           ) : (
-            <CheckCircle2 className="w-3.5 h-3.5 stroke-[1.5]" />
+            <CheckCircle2 className="h-3.5 w-3.5 stroke-[1.75]" />
           )}
           <span>{isSubmitting ? 'Grading…' : 'Submit'}</span>
         </button>
