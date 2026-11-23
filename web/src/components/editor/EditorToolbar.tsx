@@ -1,4 +1,4 @@
-import { Bug, Play, RotateCcw, Loader2, FlaskConical } from 'lucide-react';
+import { Bug, Play, RotateCcw, Loader2, FlaskConical, CheckCircle2 } from 'lucide-react';
 import type { ProjectFile } from '../../types/workspace';
 import type { SupportedLanguage } from '@debugLabs/shared';
 import { LanguageSelector } from '../dsa/LanguageSelector';
@@ -12,6 +12,8 @@ interface Props {
   onSelectLanguage?: (lang: SupportedLanguage) => void;
   onRunTestCases?: () => void;
   isDsaRunning?: boolean;
+  onSubmitSolution?: () => void;
+  isSubmitting?: boolean;
 }
 
 export function EditorToolbar({
@@ -23,6 +25,8 @@ export function EditorToolbar({
   onSelectLanguage,
   onRunTestCases,
   isDsaRunning = false,
+  onSubmitSolution,
+  isSubmitting = false,
 }: Props) {
   const breadcrumbPath =
     activeFile.folder === 'root'
@@ -69,9 +73,9 @@ export function EditorToolbar({
           <button
             type="button"
             onClick={onRunTestCases}
-            disabled={isRunning || isDsaRunning}
+            disabled={isRunning || isDsaRunning || isSubmitting}
             className="flex items-center gap-1.5 bg-emerald-600/20 hover:bg-emerald-600/30 border border-emerald-500/30 text-emerald-400 disabled:opacity-50 font-medium text-xs px-3 py-1.5 rounded-[6px] cursor-pointer transition-colors duration-150"
-            title="Run solution against DSA test cases"
+            title="Run solution against sample DSA test cases"
           >
             {isDsaRunning ? (
               <Loader2 className="w-3.5 h-3.5 animate-spin stroke-[2]" />
@@ -79,6 +83,24 @@ export function EditorToolbar({
               <FlaskConical className="w-3.5 h-3.5 stroke-[1.75]" />
             )}
             <span>{isDsaRunning ? 'Testing...' : 'Run Tests'}</span>
+          </button>
+        )}
+
+        {/* Submit Solution */}
+        {onSubmitSolution && (
+          <button
+            type="button"
+            onClick={onSubmitSolution}
+            disabled={isRunning || isDsaRunning || isSubmitting}
+            className="flex items-center gap-1.5 bg-sky-600 hover:bg-sky-500 disabled:opacity-50 text-white font-medium text-xs px-3 py-1.5 rounded-[6px] cursor-pointer transition-colors duration-150 shadow-sm"
+            title="Submit solution for grading (runs against all test cases including hidden ones)"
+          >
+            {isSubmitting ? (
+              <Loader2 className="w-3.5 h-3.5 animate-spin stroke-[2]" />
+            ) : (
+              <CheckCircle2 className="w-3.5 h-3.5 stroke-[2]" />
+            )}
+            <span>{isSubmitting ? 'Grading...' : 'Submit'}</span>
           </button>
         )}
 

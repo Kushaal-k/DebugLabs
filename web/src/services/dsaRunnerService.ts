@@ -284,33 +284,41 @@ function executeNonJsTestCase(
   }
 }
 
+import { runDsaTestCases as runViaBackend } from './dsaService';
+
 export async function runDsaTestCases(
   code: string,
   language: SupportedLanguage,
   problem: DsaProblem,
   testCases: DsaTestCase[]
 ): Promise<DsaRunSummary> {
-  const overallStart = performance.now();
-  const results: DsaTestCaseResult[] = [];
+  try {
+    return await runViaBackend(problem.id, language, code, testCases);
+  } catch (backendError) {
+    console.warn('[dsaRunner] Backend API run failed, using local evaluator fallback:', backendError);
+    const overallStart = performance.now();
+    const results: DsaTestCaseResult[] = [];
 
-  for (const tc of testCases) {
-    if (language === 'javascript') {
-      results.push(executeJavaScriptTestCase(code, problem, tc));
-    } else {
-      results.push(executeNonJsTestCase(code, language, problem, tc));
+    for (const tc of testCases) {
+      if (language === 'javascript') {
+        results.push(executeJavaScriptTestCase(code, problem, tc));
+      } else {
+        results.push(executeNonJsTestCase(code, language, problem, tc));
+      }
     }
+
+    const passedCount = results.filter((r) => r.passed).length;
+    const failedCount = results.length - passedCount;
+    const totalDuration = Math.max(Math.round(performance.now() - overallStart), 2);
+
+    return {
+      total: results.length,
+      passed: passedCount,
+      failed: failedCount,
+      executionTimeMs: totalDuration,
+      results,
+      status: failedCount === 0 ? 'passed' : 'failed',
+      verdict: failedCount === 0 ? 'Accepted' : 'Wrong Answer',
+    };
   }
-
-  const passedCount = results.filter((r) => r.passed).length;
-  const failedCount = results.length - passedCount;
-  const totalDuration = Math.max(Math.round(performance.now() - overallStart), 2);
-
-  return {
-    total: results.length,
-    passed: passedCount,
-    failed: failedCount,
-    executionTimeMs: totalDuration,
-    results,
-    status: failedCount === 0 ? 'passed' : 'failed',
-  };
 }

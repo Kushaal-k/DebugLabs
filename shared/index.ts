@@ -108,6 +108,8 @@ export interface DsaProblemSummary {
   category: string;
   tags: string[];
   solved?: boolean;
+  description?: string;
+  languages?: SupportedLanguage[];
 }
 
 export interface LanguageOption {

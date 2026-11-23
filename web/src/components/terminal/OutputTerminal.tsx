@@ -13,7 +13,7 @@ import {
   FlaskConical,
   ListChecks,
 } from 'lucide-react';
-import type { DsaTestCase, DsaRunSummary } from '../../types/dsa';
+import type { DsaTestCase, DsaRunSummary, DsaSubmissionResult } from '../../types/dsa';
 import { TestCaseTab } from '../dsa/TestCaseTab';
 import { TestResultTab } from '../dsa/TestResultTab';
 
@@ -34,6 +34,8 @@ interface Props {
   onRunTestCases?: () => void;
   dsaRunSummary?: DsaRunSummary | null;
   isDsaRunning?: boolean;
+  dsaSubmissionResult?: DsaSubmissionResult | null;
+  isSubmitting?: boolean;
 }
 
 const XTERM_THEME = {
@@ -74,6 +76,8 @@ export function OutputTerminal({
   onRunTestCases,
   dsaRunSummary = null,
   isDsaRunning = false,
+  dsaSubmissionResult = null,
+  isSubmitting = false,
 }: Props) {
   const [internalTab, setInternalTab] = useState<BottomPanelTab>('testcases');
   const [isCollapsed, setIsCollapsed] = useState(false);
@@ -266,8 +270,11 @@ export function OutputTerminal({
         await navigator.clipboard.writeText(textToCopy);
       } else if (currentTab === 'terminal') {
         await navigator.clipboard.writeText('DebugLabs interactive session');
-      } else if (currentTab === 'results' && dsaRunSummary) {
-        await navigator.clipboard.writeText(JSON.stringify(dsaRunSummary, null, 2));
+      } else if (currentTab === 'results') {
+        const toCopy = dsaSubmissionResult || dsaRunSummary;
+        if (toCopy) {
+          await navigator.clipboard.writeText(JSON.stringify(toCopy, null, 2));
+        }
       }
       setCopied(true);
       setTimeout(() => setCopied(false), 1400);
@@ -319,7 +326,17 @@ export function OutputTerminal({
                 }`}
               />
               <span>Test Result</span>
-              {dsaRunSummary && (
+              {dsaSubmissionResult ? (
+                <span
+                  className={`text-[10px] px-1 rounded font-mono ${
+                    dsaSubmissionResult.status === 'Accepted'
+                      ? 'bg-emerald-500/20 text-emerald-400'
+                      : 'bg-rose-500/20 text-rose-400'
+                  }`}
+                >
+                  {dsaSubmissionResult.passedCount}/{dsaSubmissionResult.totalCount}
+                </span>
+              ) : dsaRunSummary ? (
                 <span
                   className={`text-[10px] px-1 rounded font-mono ${
                     dsaRunSummary.status === 'passed'
@@ -329,7 +346,7 @@ export function OutputTerminal({
                 >
                   {dsaRunSummary.passed}/{dsaRunSummary.total}
                 </span>
-              )}
+              ) : null}
             </button>
 
             {/* Output Tab */}
@@ -440,7 +457,8 @@ export function OutputTerminal({
         {currentTab === 'results' && (
           <TestResultTab
             runSummary={dsaRunSummary}
-            isRunning={isDsaRunning}
+            submissionResult={dsaSubmissionResult}
+            isRunning={isDsaRunning || isSubmitting}
           />
         )}
 

@@ -5,13 +5,15 @@ import {
   Search,
   SlidersHorizontal,
   X,
+  Loader2,
 } from 'lucide-react';
 import { DEFAULT_DSA_PROBLEMS } from '../../data/dsaScenarios';
-import type { DsaDifficulty, DsaProblem } from '../../types/dsa';
+import type { DsaDifficulty, DsaProblem, DsaProblemSummary } from '../../types/dsa';
 
 interface Props {
-  problems?: DsaProblem[];
-  onOpenProblem: (problem: DsaProblem) => void;
+  problems?: (DsaProblem | DsaProblemSummary)[];
+  onOpenProblem: (problem: DsaProblem | DsaProblemSummary) => void;
+  isLoading?: boolean;
 }
 
 const difficultyStyles: Record<DsaDifficulty, string> = {
@@ -23,6 +25,7 @@ const difficultyStyles: Record<DsaDifficulty, string> = {
 export function DsaDashboard({
   problems = DEFAULT_DSA_PROBLEMS,
   onOpenProblem,
+  isLoading = false,
 }: Props) {
   const [query, setQuery] = useState('');
   const [difficulty, setDifficulty] = useState('All');
@@ -201,13 +204,23 @@ export function DsaDashboard({
           )}
         </div>
 
-        {filteredProblems.length > 0 ? (
+        {isLoading ? (
+          <div className="flex flex-col items-center justify-center rounded-lg border border-white/10 bg-[#141415] px-6 py-16 text-center space-y-3">
+            <Loader2 className="h-6 w-6 animate-spin text-emerald-400" />
+            <p className="text-sm font-medium text-[#ededed]">Loading DSA labs...</p>
+            <p className="text-xs text-[#85858b]">Fetching debugging challenges from backend</p>
+          </div>
+        ) : filteredProblems.length > 0 ? (
           <ul className="overflow-hidden rounded-lg border border-white/10 bg-[#141415] divide-y divide-white/[0.08]">
             {filteredProblems.map((problem) => {
-              const languageCount = Object.values(problem.starterCode)
-                .filter((code) => code.trim().length > 0).length;
+              const languageCount =
+                ('languages' in problem && problem.languages?.length)
+                  ? problem.languages.length
+                  : ('starterCode' in problem && problem.starterCode
+                      ? Object.values(problem.starterCode).filter((code) => code.trim().length > 0).length
+                      : 4);
 
-              const description = problem.description
+              const description = (problem.description || '')
                 .replace(/[`*]/g, '')
                 .replace(/\s+/g, ' ')
                 .trim();

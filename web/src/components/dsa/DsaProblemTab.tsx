@@ -1,14 +1,26 @@
 import { useMemo } from 'react';
-import { BookOpen, Tag, Layers, ChevronDown } from 'lucide-react';
-import type { DsaProblem } from '../../types/dsa';
+import {
+  BookOpen,
+  Tag,
+  Layers,
+  ChevronDown,
+  AlertTriangle,
+  Lightbulb,
+} from 'lucide-react';
+import type { DsaProblem, DsaProblemSummary } from '../../types/dsa';
 import { DEFAULT_DSA_PROBLEMS } from '../../data/dsaScenarios';
 
 interface Props {
   currentProblem: DsaProblem;
-  onSelectProblem: (problem: DsaProblem) => void;
+  problems?: (DsaProblem | DsaProblemSummary)[];
+  onSelectProblem: (problemId: string) => void;
 }
 
-export function DsaProblemTab({ currentProblem, onSelectProblem }: Props) {
+export function DsaProblemTab({
+  currentProblem,
+  problems = DEFAULT_DSA_PROBLEMS,
+  onSelectProblem,
+}: Props) {
   const difficultyColor = useMemo(() => {
     switch (currentProblem.difficulty) {
       case 'Easy':
@@ -19,6 +31,8 @@ export function DsaProblemTab({ currentProblem, onSelectProblem }: Props) {
         return 'bg-rose-500/10 text-rose-400 border-rose-500/20';
     }
   }, [currentProblem.difficulty]);
+
+  const problemList = problems && problems.length > 0 ? problems : DEFAULT_DSA_PROBLEMS;
 
   return (
     <div className="flex-1 flex flex-col h-full bg-[#0f0f10] text-[#ededed] overflow-y-auto custom-scrollbar select-text">
@@ -35,12 +49,11 @@ export function DsaProblemTab({ currentProblem, onSelectProblem }: Props) {
             <select
               value={currentProblem.id}
               onChange={(e) => {
-                const found = DEFAULT_DSA_PROBLEMS.find((p) => p.id === e.target.value);
-                if (found) onSelectProblem(found);
+                onSelectProblem(e.target.value);
               }}
               className="bg-[#1e1e21] border border-white/[0.08] hover:border-white/[0.15] text-[#ededed] text-xs rounded px-2.5 py-1 pr-6 cursor-pointer appearance-none outline-none font-mono"
             >
-              {DEFAULT_DSA_PROBLEMS.map((prob) => (
+              {problemList.map((prob) => (
                 <option key={prob.id} value={prob.id} className="bg-[#18181b]">
                   {prob.title}
                 </option>
@@ -80,6 +93,44 @@ export function DsaProblemTab({ currentProblem, onSelectProblem }: Props) {
 
       {/* Problem Content */}
       <div className="p-4 space-y-6 text-xs leading-relaxed text-[#c4c4c8]">
+        {/* Bug Overview if available */}
+        {currentProblem.bugDescription && (
+          <section className="bg-amber-500/10 border border-amber-500/20 rounded-md p-3 space-y-1.5">
+            <div className="flex items-center gap-1.5 text-xs font-semibold text-amber-400">
+              <AlertTriangle className="w-3.5 h-3.5" />
+              <span>Bug Overview</span>
+            </div>
+            <p className="text-[12px] text-[#e4e4e7] leading-relaxed">
+              {currentProblem.bugDescription}
+            </p>
+          </section>
+        )}
+
+        {/* Hints if available */}
+        {currentProblem.hints && currentProblem.hints.length > 0 && (
+          <section className="space-y-2">
+            <h2 className="text-xs font-semibold uppercase tracking-wider text-[#85858b] flex items-center gap-1.5">
+              <Lightbulb className="w-3.5 h-3.5 text-amber-400" />
+              <span>Debugging Hints</span>
+            </h2>
+            <div className="space-y-1.5">
+              {currentProblem.hints.map((hint, i) => (
+                <details
+                  key={i}
+                  className="group bg-[#141415] border border-white/[0.06] rounded p-2.5 text-[12px] text-[#c4c4c8]"
+                >
+                  <summary className="cursor-pointer font-medium text-emerald-400 select-none text-[11px] hover:text-emerald-300">
+                    Hint {i + 1}
+                  </summary>
+                  <p className="mt-2 pl-2 border-l-2 border-emerald-500/30 text-[11px] leading-5 text-[#a1a1a6]">
+                    {hint}
+                  </p>
+                </details>
+              ))}
+            </div>
+          </section>
+        )}
+
         {/* Description */}
         <section>
           <div className="whitespace-pre-line text-[#d4d4d8] font-sans text-[13px] leading-6">

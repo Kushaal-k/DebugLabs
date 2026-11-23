@@ -1,4 +1,7 @@
 import path from "node:path";
+import fs from "node:fs/promises";
+import os from "node:os";
+import { spawn } from "node:child_process";
 import Dockerode from "dockerode";
 import tar from "tar-stream";
 import type {
@@ -197,6 +200,141 @@ function resolveRunCommand(payload: ExecutionPayload, entrypoint: string): strin
   }
 }
 
+async function executeLocally(
+  payload: ExecutionPayload,
+  files: readonly ExecutionFile[],
+  entrypoint: string
+): Promise<ExecutionResult> {
+  const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "debuglabs-exec-"));
+  const startTime = performance.now();
+  try {
+    for (const file of files) {
+      const fullPath = path.join(tmpDir, sanitizeRelativePath(file.path));
+      await fs.mkdir(path.dirname(fullPath), { recursive: true });
+      await fs.writeFile(fullPath, file.content, "utf-8");
+    }
+
+    const safeEntrypoint = sanitizeRelativePath(entrypoint);
+    let cmd = "";
+    let args: string[] = [];
+
+    if (payload.command) {
+      cmd = "sh";
+      args = ["-c", payload.command];
+    } else {
+      switch (payload.language) {
+        case "javascript":
+          cmd = process.execPath;
+          args = [path.join(tmpDir, safeEntrypoint)];
+          break;
+        case "python":
+          cmd = "python3";
+          args = [path.join(tmpDir, safeEntrypoint)];
+          break;
+        case "cpp":
+          cmd = "sh";
+          args = [
+            "-c",
+            `g++ -O2 -std=c++20 "${path.join(tmpDir, safeEntrypoint)}" -o "${path.join(tmpDir, "main")}" && "${path.join(tmpDir, "main")}"`,
+          ];
+          break;
+        case "java": {
+          const mainClass = safeEntrypoint.replace(/\.java$/, "").replace(/\//g, ".");
+          cmd = "sh";
+          args = [
+            "-c",
+            `javac -d "${tmpDir}" "${path.join(tmpDir, safeEntrypoint)}" && java -cp "${tmpDir}" ${mainClass}`,
+          ];
+          break;
+        }
+        case "c":
+          cmd = "sh";
+          args = [
+            "-c",
+            `gcc -O2 "${path.join(tmpDir, safeEntrypoint)}" -o "${path.join(tmpDir, "main")}" && "${path.join(tmpDir, "main")}"`,
+          ];
+          break;
+        default:
+          cmd = process.execPath;
+          args = [path.join(tmpDir, safeEntrypoint)];
+          break;
+      }
+    }
+
+    return await new Promise<ExecutionResult>((resolve) => {
+      const child = spawn(cmd, args, {
+        cwd: tmpDir,
+        env: {
+          ...process.env,
+          PORT: "3000",
+        },
+        stdio: ["pipe", "pipe", "pipe"],
+      });
+
+      const stdoutChunks: Buffer[] = [];
+      const stderrChunks: Buffer[] = [];
+
+      child.stdout?.on("data", (chunk) => stdoutChunks.push(chunk));
+      child.stderr?.on("data", (chunk) => stderrChunks.push(chunk));
+
+      let timedOut = false;
+      const timer = setTimeout(() => {
+        timedOut = true;
+        child.kill("SIGKILL");
+      }, EXECUTION_TIMEOUT_MS);
+
+      child.on("close", (code) => {
+        clearTimeout(timer);
+        const executionTime = performance.now() - startTime;
+        const stdout = Buffer.concat(stdoutChunks).toString("utf-8").slice(0, MAX_OUTPUT_SIZE);
+        let error = Buffer.concat(stderrChunks).toString("utf-8").slice(0, MAX_OUTPUT_SIZE);
+        if (timedOut) {
+          error = `Execution timed out after ${EXECUTION_TIMEOUT_MS}ms`;
+        }
+
+        resolve({
+          status: code === 0 && !timedOut ? "Completed" : "Failed",
+          stdout,
+          error,
+          executionTime,
+          memoryUsed: 0,
+          exitCode: code,
+        });
+      });
+
+      child.on("error", (err) => {
+        clearTimeout(timer);
+        resolve({
+          status: "Failed",
+          stdout: "",
+          error: err.message,
+          executionTime: performance.now() - startTime,
+          memoryUsed: 0,
+          exitCode: 1,
+        });
+      });
+
+      if (payload.stdin !== undefined) {
+        child.stdin?.write(payload.stdin);
+        child.stdin?.end();
+      } else {
+        child.stdin?.end();
+      }
+    });
+  } catch (err: any) {
+    return {
+      status: "Failed",
+      stdout: "",
+      error: err.message || "Local execution failed",
+      executionTime: performance.now() - startTime,
+      memoryUsed: 0,
+      exitCode: 1,
+    };
+  } finally {
+    await fs.rm(tmpDir, { recursive: true, force: true }).catch(() => {});
+  }
+}
+
 export async function executeCode(payload: ExecutionPayload): Promise<ExecutionResult> {
   const { language, stdin } = payload;
   const entrypoint = payload.entrypoint || DEFAULT_ENTRYPOINTS[language];
@@ -204,6 +342,17 @@ export async function executeCode(payload: ExecutionPayload): Promise<ExecutionR
     payload.files && payload.files.length > 0
       ? payload.files
       : [{ path: entrypoint, content: payload.code ?? "" }];
+
+  let isDockerUnavailable = false;
+  try {
+    await docker.ping();
+  } catch {
+    isDockerUnavailable = true;
+  }
+
+  if (isDockerUnavailable || process.env.USE_LOCAL_EXECUTION === "true") {
+    return await executeLocally(payload, files, entrypoint);
+  }
 
   const image = LANGUAGE_IMAGES[language];
   const hasStdin = stdin !== undefined;
