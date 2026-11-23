@@ -6,6 +6,21 @@ export interface ServiceStatus {
 export type SUPPORTED_LANGUAGES = "javascript" | "python" | "java" | "cpp" | "c" | "csharp";
 export type SupportedLanguage = SUPPORTED_LANGUAGES;
 
+export const SUPPORTED_LANGUAGES_LIST: readonly SupportedLanguage[] = [
+  "javascript",
+  "python",
+  "java",
+  "cpp",
+  "c",
+  "csharp",
+] as const;
+
+export const DSA_DIFFICULTIES: readonly DsaDifficulty[] = [
+  "Easy",
+  "Medium",
+  "Hard",
+] as const;
+
 export interface ExecutionFile {
   path: string;
   content: string;
