@@ -45,74 +45,131 @@ export const VALID_PARENTHESES_PROBLEM: DsaProblem = {
     "s consists of parentheses only '()[]{}'.",
   ],
   starterCode: {
-    javascript: `import fs from "node:fs";
+    javascript: `// User function Template for javascript
+
+class Solution {
+  /**
+   * @param {string} s
+   * @return {boolean}
+   */
+  isValid(s) {
+    if (!s) return true;
+
+    const stack = [];
+    const map = { ")": "(", "}": "{", "]": "[" };
+    let ok = true;
+
+    for (let i = 0; i < s.length; i++) {
+      const c = s[i];
+      if (map[c]) {
+        if (stack.length === 0) {
+          ok = false;
+          break;
+        }
+        const top = stack.pop();
+        if (top !== map[c]) {
+          ok = false;
+          break;
+        }
+      } else {
+        stack.push(c);
+      }
+    }
+
+    return ok;
+  }
+}
+
+//{ Driver Code Starts
+// Initial Template for javascript
+import fs from "node:fs";
 
 function main() {
   const s = fs.readFileSync(0, "utf-8").trim();
-  if (!s) {
-    console.log("true");
-    return;
-  }
-
-  const stack = [];
-  const map = { ")": "(", "}": "{", "]": "[" };
-  let ok = true;
-
-  for (let i = 0; i < s.length; i++) {
-    const c = s[i];
-    if (map[c]) {
-      if (stack.length === 0) {
-        ok = false;
-        break;
-      }
-      const top = stack.pop();
-      if (top !== map[c]) {
-        ok = false;
-        break;
-      }
-    } else {
-      stack.push(c);
-    }
-  }
-
-  console.log(ok ? "true" : "false");
+  const solution = new Solution();
+  console.log(solution.isValid(s) ? "true" : "false");
 }
 
 main();
+//} Driver Code Ends
 `,
-    python: `import sys
+    python: `# User function Template for python3
+
+class Solution:
+    def isValid(self, s: str) -> bool:
+        if not s:
+            return True
+
+        stack = []
+        mapping = {")": "(", "}": "{", "]": "["}
+        ok = True
+
+        for c in s:
+            if c in mapping:
+                if not stack:
+                    ok = False
+                    break
+                top = stack.pop()
+                if top != mapping[c]:
+                    ok = False
+                    break
+            else:
+                stack.append(c)
+
+        return ok
+
+# { Driver Code Starts
+# Initial Template for python3
+import sys
 
 def main():
     s = sys.stdin.read().strip()
-    if not s:
-        print("true")
-        return
-
-    stack = []
-    mapping = {")": "(", "}": "{", "]": "["}
-    ok = True
-
-    for c in s:
-        if c in mapping:
-            if not stack:
-                ok = False
-                break
-            top = stack.pop()
-            if top != mapping[c]:
-                ok = False
-                break
-        else:
-            stack.append(c)
-
-    print("true" if ok else "false")
+    solution = Solution()
+    print("true" if solution.isValid(s) else "false")
 
 if __name__ == "__main__":
     main()
+# } Driver Code Ends
 `,
-    cpp: `#include <iostream>
+    cpp: `// User function Template for C++
+
 #include <string>
 #include <stack>
 using namespace std;
+
+class Solution {
+public:
+    bool isValid(string s) {
+        if (s.empty()) return true;
+
+        stack<char> st;
+        bool ok = true;
+        for (char c : s) {
+            if (c == '(' || c == '{' || c == '[') {
+                st.push(c);
+            } else {
+                if (st.empty()) {
+                    ok = false;
+                    break;
+                }
+                char top = st.top();
+                st.pop();
+                if ((c == ')' && top != '(') ||
+                    (c == '}' && top != '{') ||
+                    (c == ']' && top != '[')) {
+                    ok = false;
+                    break;
+                }
+            }
+        }
+
+        return ok;
+    }
+};
+
+//{ Driver Code Starts
+// Initial Template for C++
+#include <iostream>
 
 int main() {
     string s;
@@ -121,41 +178,20 @@ int main() {
         return 0;
     }
 
-    stack<char> st;
-    bool ok = true;
-    for (char c : s) {
-        if (c == '(' || c == '{' || c == '[') {
-            st.push(c);
-        } else {
-            if (st.empty()) {
-                ok = false;
-                break;
-            }
-            char top = st.top();
-            st.pop();
-            if ((c == ')' && top != '(') ||
-                (c == '}' && top != '{') ||
-                (c == ']' && top != '[')) {
-                ok = false;
-                break;
-            }
-        }
-    }
-
-    cout << (ok ? "true" : "false") << "\\n";
+    Solution solution;
+    cout << (solution.isValid(s) ? "true" : "false") << "\\n";
     return 0;
 }
+//} Driver Code Ends
 `,
-    java: `import java.util.*;
+    java: `// User function Template for Java
 
-public class Main {
-    public static void main(String[] args) {
-        Scanner sc = new Scanner(System.in);
-        if (!sc.hasNext()) {
-            System.out.println("true");
-            return;
-        }
-        String s = sc.next();
+import java.util.*;
+
+class Solution {
+    public boolean isValid(String s) {
+        if (s == null || s.isEmpty()) return true;
+
         Deque<Character> stack = new ArrayDeque<>();
         boolean ok = true;
 
@@ -178,9 +214,26 @@ public class Main {
             }
         }
 
-        System.out.println(ok ? "true" : "false");
+        return ok;
     }
 }
+
+//{ Driver Code Starts
+// Initial Template for Java
+public class Main {
+    public static void main(String[] args) {
+        Scanner sc = new Scanner(System.in);
+        if (!sc.hasNext()) {
+            System.out.println("true");
+            return;
+        }
+        String s = sc.next();
+
+        Solution solution = new Solution();
+        System.out.println(solution.isValid(s) ? "true" : "false");
+    }
+}
+//} Driver Code Ends
 `,
   },
   testCases,

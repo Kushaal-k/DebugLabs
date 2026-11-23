@@ -152,10 +152,10 @@ export function DsaDashboard({
                   onChange={(event) => setDifficulty(event.target.value)}
                   className="glass-inset h-10 rounded-xl px-3 text-sm text-[#ededed] outline-none focus-visible:ring-2 focus-visible:ring-emerald-400"
                 >
-                  <option value="All">All difficulties</option>
-                  <option value="Easy">Easy</option>
-                  <option value="Medium">Medium</option>
-                  <option value="Hard">Hard</option>
+                  <option value="All" className="bg-[#0e0f15] text-[#ededed]">All difficulties</option>
+                  <option value="Easy" className="bg-[#0e0f15] text-[#ededed]">Easy</option>
+                  <option value="Medium" className="bg-[#0e0f15] text-[#ededed]">Medium</option>
+                  <option value="Hard" className="bg-[#0e0f15] text-[#ededed]">Hard</option>
                 </select>
               </label>
 
@@ -166,9 +166,9 @@ export function DsaDashboard({
                   onChange={(event) => setTopic(event.target.value)}
                   className="glass-inset h-10 rounded-xl px-3 text-sm text-[#ededed] outline-none focus-visible:ring-2 focus-visible:ring-emerald-400"
                 >
-                  <option value="All">All topics</option>
+                  <option value="All" className="bg-[#0e0f15] text-[#ededed]">All topics</option>
                   {topics.map((item) => (
-                    <option key={item} value={item}>
+                    <option key={item} value={item} className="bg-[#0e0f15] text-[#ededed]">
                       {item}
                     </option>
                   ))}

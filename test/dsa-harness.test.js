@@ -125,8 +125,8 @@ test("JavaScript starter code flags bug and fixed code passes", () => {
 
   // 2. Fixed code produces "0 1"
   const fixedJs = TWO_SUM_PROBLEM.starterCode.javascript.replace(
-    "${seen.get(complement) + 1} ${i + 1}",
-    "${seen.get(complement)} ${i}"
+    "[seen.get(complement) + 1, i + 1]",
+    "[seen.get(complement), i]"
   );
   const fixedOut = runCodeWithStdin(fixedJs, tc.input, "node index.js", "index.js");
   const fixedRes = evaluateTestCase(fixedOut, "", 0, 10, tc);
@@ -169,8 +169,8 @@ test("C++ starter code flags bug and fixed code passes", () => {
 
   // 2. Fixed code
   const fixedCpp = TWO_SUM_PROBLEM.starterCode.cpp.replace(
-    "cout << seen[complement] + 1 << \" \" << i + 1 << \"\\n\";",
-    "cout << seen[complement] << \" \" << i << \"\\n\";"
+    "{seen[complement] + 1, i + 1}",
+    "{seen[complement], i}"
   );
   const fixedOut = runCodeWithStdin(
     fixedCpp,
@@ -218,8 +218,8 @@ test("DSA execution via engine runs end-to-end", async (t) => {
 
   // 2. Fixed code
   const fixedJs = TWO_SUM_PROBLEM.starterCode.javascript.replace(
-    "${seen.get(complement) + 1} ${i + 1}",
-    "${seen.get(complement)} ${i}"
+    "[seen.get(complement) + 1, i + 1]",
+    "[seen.get(complement), i]"
   );
   const fixedPayload = buildDsaExecutionPayload("javascript", fixedJs, tc.input);
   const resFixed = await fetch(`http://127.0.0.1:${port}/execute`, {

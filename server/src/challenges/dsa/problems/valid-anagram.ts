@@ -41,29 +41,59 @@ export const VALID_ANAGRAM_PROBLEM: DsaProblem = {
     "s and t consist of lowercase English letters.",
   ],
   starterCode: {
-    javascript: `import fs from "node:fs";
+    javascript: `// User function Template for javascript
+
+class Solution {
+  /**
+   * @param {string} s
+   * @param {string} t
+   * @return {boolean}
+   */
+  isAnagram(s, t) {
+    const counts = {};
+    for (const c of s) counts[c] = (counts[c] || 0) + 1;
+    for (const c of t) {
+      if (!counts[c]) {
+        return false;
+      }
+      counts[c]--;
+    }
+    return true;
+  }
+}
+
+//{ Driver Code Starts
+// Initial Template for javascript
+import fs from "node:fs";
 
 function main() {
   const words = fs.readFileSync(0, "utf-8").trim().split(/\\s+/);
   if (words.length < 2) return;
   const [s, t] = words;
 
-  const counts = {};
-  for (const c of s) counts[c] = (counts[c] || 0) + 1;
-  for (const c of t) {
-    if (!counts[c]) {
-      console.log("false");
-      return;
-    }
-    counts[c]--;
-  }
-
-  console.log("true");
+  const solution = new Solution();
+  console.log(solution.isAnagram(s, t) ? "true" : "false");
 }
 
 main();
+//} Driver Code Ends
 `,
-    python: `import sys
+    python: `# User function Template for python3
+
+class Solution:
+    def isAnagram(self, s: str, t: str) -> bool:
+        counts = {}
+        for c in s:
+            counts[c] = counts.get(c, 0) + 1
+        for c in t:
+            if c not in counts or counts[c] == 0:
+                return False
+            counts[c] -= 1
+        return True
+
+# { Driver Code Starts
+# Initial Template for python3
+import sys
 
 def main():
     words = sys.stdin.read().split()
@@ -71,44 +101,68 @@ def main():
         return
     s, t = words[0], words[1]
 
-    counts = {}
-    for c in s:
-        counts[c] = counts.get(c, 0) + 1
-    for c in t:
-        if c not in counts or counts[c] == 0:
-            print("false")
-            return
-        counts[c] -= 1
-
-    print("true")
+    solution = Solution()
+    print("true" if solution.isAnagram(s, t) else "false")
 
 if __name__ == "__main__":
     main()
+# } Driver Code Ends
 `,
-    cpp: `#include <iostream>
+    cpp: `// User function Template for C++
+
 #include <string>
 #include <unordered_map>
 using namespace std;
+
+class Solution {
+public:
+    bool isAnagram(string s, string t) {
+        unordered_map<char, int> counts;
+        for (char c : s) counts[c]++;
+        for (char c : t) {
+            if (!counts.count(c) || counts[c] == 0) {
+                return false;
+            }
+            counts[c]--;
+        }
+        return true;
+    }
+};
+
+//{ Driver Code Starts
+// Initial Template for C++
+#include <iostream>
 
 int main() {
     string s, t;
     if (!(cin >> s >> t)) return 0;
 
-    unordered_map<char, int> counts;
-    for (char c : s) counts[c]++;
-    for (char c : t) {
-        if (!counts.count(c) || counts[c] == 0) {
-            cout << "false\\n";
-            return 0;
-        }
-        counts[c]--;
-    }
-    cout << "true\\n";
+    Solution solution;
+    cout << (solution.isAnagram(s, t) ? "true" : "false") << "\\n";
     return 0;
 }
+//} Driver Code Ends
 `,
-    java: `import java.util.*;
+    java: `// User function Template for Java
 
+import java.util.*;
+
+class Solution {
+    public boolean isAnagram(String s, String t) {
+        Map<Character, Integer> counts = new HashMap<>();
+        for (char c : s.toCharArray()) counts.put(c, counts.getOrDefault(c, 0) + 1);
+        for (char c : t.toCharArray()) {
+            if (!counts.containsKey(c) || counts.get(c) == 0) {
+                return false;
+            }
+            counts.put(c, counts.get(c) - 1);
+        }
+        return true;
+    }
+}
+
+//{ Driver Code Starts
+// Initial Template for Java
 public class Main {
     public static void main(String[] args) {
         Scanner sc = new Scanner(System.in);
@@ -117,19 +171,11 @@ public class Main {
         if (!sc.hasNext()) return;
         String t = sc.next();
 
-        Map<Character, Integer> counts = new HashMap<>();
-        for (char c : s.toCharArray()) counts.put(c, counts.getOrDefault(c, 0) + 1);
-        for (char c : t.toCharArray()) {
-            if (!counts.containsKey(c) || counts.get(c) == 0) {
-                System.out.println("false");
-                return;
-            }
-            counts.put(c, counts.get(c) - 1);
-        }
-
-        System.out.println("true");
+        Solution solution = new Solution();
+        System.out.println(solution.isAnagram(s, t) ? "true" : "false");
     }
 }
+//} Driver Code Ends
 `,
   },
   testCases,

@@ -46,7 +46,36 @@ export const REVERSE_LINKED_LIST_PROBLEM: DsaProblem = {
     "-5000 <= val <= 5000",
   ],
   starterCode: {
-    javascript: `import fs from "node:fs";
+    javascript: `// User function Template for javascript
+
+/**
+ * function ListNode(val, next) {
+ *   this.val = (val===undefined ? 0 : val);
+ *   this.next = (next===undefined ? null : next);
+ * }
+ */
+
+class Solution {
+  /**
+   * @param {ListNode} head
+   * @return {ListNode}
+   */
+  reverseList(head) {
+    let prev = null;
+    let curr = head;
+    while (curr) {
+      const next = curr.next;
+      curr.next = prev;
+      prev = curr;
+      curr = next;
+    }
+    return prev;
+  }
+}
+
+//{ Driver Code Starts
+// Initial Template for javascript
+import fs from "node:fs";
 
 function ListNode(val, next) {
   this.val = val;
@@ -67,13 +96,8 @@ function main() {
     cur = cur.next;
   }
 
-  let prev = null;
-  let curr = head;
-  while (curr) {
-    curr.next = prev;
-    prev = curr;
-    curr = curr.next;
-  }
+  const solution = new Solution();
+  const prev = solution.reverseList(head);
 
   const res = [];
   let p = prev;
@@ -85,8 +109,29 @@ function main() {
 }
 
 main();
+//} Driver Code Ends
 `,
-    python: `import sys
+    python: `# User function Template for python3
+
+# class ListNode:
+#     def __init__(self, val=0, next=None):
+#         self.val = val
+#         self.next = next
+
+class Solution:
+    def reverseList(self, head):
+        prev = None
+        curr = head
+        while curr:
+            next_node = curr.next
+            curr.next = prev
+            prev = curr
+            curr = next_node
+        return prev
+
+# { Driver Code Starts
+# Initial Template for python3
+import sys
 
 class ListNode:
     def __init__(self, val=0, next=None):
@@ -108,12 +153,8 @@ def main():
         cur.next = ListNode(v)
         cur = cur.next
 
-    prev = None
-    curr = head
-    while curr:
-        curr.next = prev
-        prev = curr
-        curr = curr.next
+    solution = Solution()
+    prev = solution.reverseList(head)
 
     res = []
     p = prev
@@ -124,16 +165,36 @@ def main():
 
 if __name__ == "__main__":
     main()
+# } Driver Code Ends
 `,
-    cpp: `#include <iostream>
-#include <vector>
-using namespace std;
+    cpp: `// User function Template for C++
 
 struct ListNode {
     int val;
     ListNode* next;
     ListNode(int x) : val(x), next(nullptr) {}
 };
+
+class Solution {
+public:
+    ListNode* reverseList(ListNode* head) {
+        ListNode* prev = nullptr;
+        ListNode* curr = head;
+        while (curr) {
+            ListNode* next = curr->next;
+            curr->next = prev;
+            prev = curr;
+            curr = next;
+        }
+        return prev;
+    }
+};
+
+//{ Driver Code Starts
+// Initial Template for C++
+#include <iostream>
+#include <vector>
+using namespace std;
 
 int main() {
     int n;
@@ -149,13 +210,8 @@ int main() {
         else { tail->next = node; tail = node; }
     }
 
-    ListNode* prev = nullptr;
-    ListNode* curr = head;
-    while (curr) {
-        curr->next = prev;
-        prev = curr;
-        curr = curr->next;
-    }
+    Solution solution;
+    ListNode* prev = solution.reverseList(head);
 
     bool first = true;
     for (ListNode* p = prev; p != nullptr; p = p->next) {
@@ -166,16 +222,35 @@ int main() {
     cout << "\\n";
     return 0;
 }
+//} Driver Code Ends
 `,
-    java: `import java.util.*;
+    java: `// User function Template for Java
+
+class ListNode {
+    int val;
+    ListNode next;
+    ListNode(int val) { this.val = val; }
+}
+
+class Solution {
+    public ListNode reverseList(ListNode head) {
+        ListNode prev = null;
+        ListNode curr = head;
+        while (curr != null) {
+            ListNode next = curr.next;
+            curr.next = prev;
+            prev = curr;
+            curr = next;
+        }
+        return prev;
+    }
+}
+
+//{ Driver Code Starts
+// Initial Template for Java
+import java.util.*;
 
 public class Main {
-    static class ListNode {
-        int val;
-        ListNode next;
-        ListNode(int val) { this.val = val; }
-    }
-
     public static void main(String[] args) {
         Scanner sc = new Scanner(System.in);
         if (!sc.hasNextInt()) return;
@@ -189,13 +264,8 @@ public class Main {
             cur = cur.next;
         }
 
-        ListNode prev = null;
-        ListNode curr = head;
-        while (curr != null) {
-            curr.next = prev;
-            prev = curr;
-            curr = curr.next;
-        }
+        Solution solution = new Solution();
+        ListNode prev = solution.reverseList(head);
 
         StringBuilder sb = new StringBuilder();
         for (ListNode p = prev; p != null; p = p.next) {
@@ -205,6 +275,7 @@ public class Main {
         System.out.println(sb.toString());
     }
 }
+//} Driver Code Ends
 `,
   },
   testCases,
