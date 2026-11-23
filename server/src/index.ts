@@ -34,6 +34,11 @@ app.use((_req, res, next) => {
   next();
 });
 
+app.get("/", (_req, res) => {
+  const webUrl = process.env.WEB_URL ?? "http://localhost:5173";
+  res.redirect(webUrl);
+});
+
 app.get("/health", (_req, res) => {
   const result: ServiceStatus = {
     service: "server",
@@ -58,12 +63,11 @@ export const connection = {
 export const executionQueue = new Queue("execution-queue", { connection });
 export const queueEvents = new QueueEvents("execution-queue", { connection });
 
-let lastRedisErrorLog = 0;
-const logRedisError = (source: string, error: Error) => {
-  const now = Date.now();
-  if (now - lastRedisErrorLog > 8000) {
-    lastRedisErrorLog = now;
-    console.warn(`[server] Redis connection issue on ${source}: ${error.message} (Is Redis running on ${redisHost}?)`);
+let hasLoggedRedisWarning = false;
+const logRedisError = (_source: string, error: Error) => {
+  if (!hasLoggedRedisWarning) {
+    hasLoggedRedisWarning = true;
+    console.info(`[server] Redis is offline (${error.message}). Direct execution mode active for DSA debugging.`);
   }
 };
 
