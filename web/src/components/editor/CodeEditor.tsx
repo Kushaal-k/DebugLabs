@@ -36,23 +36,25 @@ export function CodeEditor({ file, onChange }: Props) {
   const language = getMonacoLanguage(file.language, file.name);
 
   const handleEditorWillMount: BeforeMount = (monacoInstance) => {
-    monacoInstance.editor.defineTheme('debuglabs-dark', {
+    monacoInstance.editor.defineTheme('debuglabs-graphite', {
       base: 'vs-dark',
       inherit: true,
       rules: [
-        { token: 'comment', foreground: '6a737d', fontStyle: 'italic' },
-        { token: 'keyword', foreground: 'f97583' },
-        { token: 'string', foreground: '9ecbff' },
-        { token: 'number', foreground: '79b8ff' },
+        { token: 'comment', foreground: '85858b', fontStyle: 'italic' },
+        { token: 'keyword', foreground: 'e57373' },
+        { token: 'string', foreground: '90caf9' },
+        { token: 'number', foreground: '80cbc4' },
+        { token: 'type', foreground: 'ce93d8' },
       ],
       colors: {
         'editor.background': '#141415',
         'editor.foreground': '#ededed',
-        'editor.lineHighlightBackground': '#1f1f2380',
+        'editor.lineHighlightBackground': '#19191b',
         'editorLineNumber.foreground': '#52525b',
         'editorLineNumber.activeForeground': '#ededed',
         'editorGutter.background': '#141415',
-        'editor.selectionBackground': '#264f78',
+        'editor.selectionBackground': '#ffffff1f',
+        'editorCursor.foreground': '#ededed',
       },
     });
   };
@@ -63,7 +65,7 @@ export function CodeEditor({ file, onChange }: Props) {
         height="100%"
         language={language}
         value={file.content}
-        theme="debuglabs-dark"
+        theme="debuglabs-graphite"
         beforeMount={handleEditorWillMount}
         onChange={onChange}
         options={{
@@ -79,17 +81,17 @@ export function CodeEditor({ file, onChange }: Props) {
           wordWrap: 'on',
           lineNumbers: 'on',
           renderLineHighlight: 'all',
-          padding: { top: 12, bottom: 12 },
+          padding: { top: 16, bottom: 16 },
           scrollbar: {
-            verticalScrollbarSize: 8,
-            horizontalScrollbarSize: 8,
+            verticalScrollbarSize: 6,
+            horizontalScrollbarSize: 6,
           },
           smoothScrolling: true,
           cursorBlinking: 'smooth',
         }}
         loading={
           <div className="flex h-full items-center justify-center text-xs font-mono text-[#85858b]">
-            Loading Monaco Editor...
+            Loading editor…
           </div>
         }
       />
