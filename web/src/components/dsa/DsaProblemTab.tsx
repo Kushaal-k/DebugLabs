@@ -3,7 +3,6 @@ import {
   Tag,
   Layers,
   ChevronDown,
-  HelpCircle,
   Check,
 } from 'lucide-react';
 import type { DsaProblem, DsaProblemSummary } from '../../types/dsa';
@@ -191,31 +190,6 @@ export function DsaProblemTab({
             ))}
           </ul>
         </section>
-
-        {/* Debugging Hints at the bottom */}
-        {currentProblem.hints && currentProblem.hints.length > 0 && (
-          <section className="space-y-2 pt-2 border-t border-white/[0.06]">
-            <h2 className="text-xs font-medium text-[#85858b] flex items-center gap-1.5">
-              <HelpCircle className="w-3.5 h-3.5 stroke-[1.5]" />
-              <span>Debugging hints</span>
-            </h2>
-            <div className="space-y-1.5">
-              {currentProblem.hints.map((hint, i) => (
-                <details
-                  key={i}
-                  className="glass-inset group rounded-2xl p-3 text-[12px] text-[#a1a1a6]"
-                >
-                  <summary className="cursor-pointer font-medium text-[#ededed] select-none text-[11px] hover:text-[#4cc38a] transition-colors">
-                    Hint {i + 1}
-                  </summary>
-                  <p className="mt-2 pl-2 border-l border-white/[0.12] text-[11px] leading-5 text-[#a1a1a6]">
-                    {hint}
-                  </p>
-                </details>
-              ))}
-            </div>
-          </section>
-        )}
       </div>
     </div>
   );

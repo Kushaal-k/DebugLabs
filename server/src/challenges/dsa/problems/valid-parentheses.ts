@@ -75,7 +75,6 @@ function main() {
     }
   }
 
-  // BUG: Forgot to check if stack is empty at the end!
   console.log(ok ? "true" : "false");
 }
 
@@ -105,7 +104,6 @@ def main():
         else:
             stack.append(c)
 
-    # BUG: Forgot to check if stack is empty at the end!
     print("true" if ok else "false")
 
 if __name__ == "__main__":
@@ -144,7 +142,6 @@ int main() {
         }
     }
 
-    // BUG: Forgot to check if stack is empty at the end!
     cout << (ok ? "true" : "false") << "\\n";
     return 0;
 }
@@ -181,7 +178,6 @@ public class Main {
             }
         }
 
-        // BUG: Forgot to check if stack is empty at the end!
         System.out.println(ok ? "true" : "false");
     }
 }

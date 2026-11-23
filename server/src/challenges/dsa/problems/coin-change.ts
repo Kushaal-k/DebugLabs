@@ -56,7 +56,6 @@ function main() {
   const amount = parseInt(input[1], 10);
   const coins = input.slice(2, 2 + n).map(Number);
 
-  // BUG: Initialized with 0 instead of infinity (amount + 1)
   const dp = new Array(amount + 1).fill(0);
   dp[0] = 0;
 
@@ -83,7 +82,6 @@ def main():
     amount = int(input_data[1])
     coins = [int(x) for x in input_data[2:2 + n]]
 
-    # BUG: Initialized with 0 instead of float('inf')
     dp = [0] * (amount + 1)
     dp[0] = 0
 
@@ -108,7 +106,6 @@ int main() {
     vector<int> coins(n);
     for (int i = 0; i < n; i++) cin >> coins[i];
 
-    // BUG: Initialized with 0 instead of infinity (amount + 1)
     vector<int> dp(amount + 1, 0);
     dp[0] = 0;
 
@@ -137,7 +134,6 @@ public class Main {
             coins[i] = sc.nextInt();
         }
 
-        // BUG: Initialized with 0 instead of infinity (amount + 1)
         int[] dp = new int[amount + 1];
         dp[0] = 0;
 

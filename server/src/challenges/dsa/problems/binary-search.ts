@@ -55,7 +55,6 @@ function main() {
   let right = n - 1;
   let ans = -1;
 
-  // BUG: 'left < right' terminates before inspecting the final candidate when left === right!
   while (left < right) {
     const mid = Math.floor(left + (right - left) / 2);
     if (nums[mid] === target) {
@@ -85,7 +84,6 @@ def main():
 
     left, right = 0, n - 1
     ans = -1
-    # BUG: 'left < right' terminates before inspecting the final candidate when left == right!
     while left < right:
         mid = left + (right - left) // 2
         if nums[mid] == target:
@@ -113,7 +111,6 @@ int main() {
 
     int left = 0, right = n - 1;
     int ans = -1;
-    // BUG: 'left < right' terminates before inspecting the final candidate when left == right!
     while (left < right) {
         int mid = left + (right - left) / 2;
         if (nums[mid] == target) {
@@ -144,7 +141,6 @@ public class Main {
 
         int left = 0, right = n - 1;
         int ans = -1;
-        // BUG: 'left < right' terminates before inspecting the final candidate when left == right!
         while (left < right) {
             int mid = left + (right - left) / 2;
             if (nums[mid] == target) {
