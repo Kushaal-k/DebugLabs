@@ -109,7 +109,7 @@ export function TestResultTab({
 
       {/* Details View */}
       {activeResult && (
-        <div className="flex-1 p-3.5 overflow-y-auto space-y-3 font-mono text-xs">
+        <div className="flex-1 p-3.5 overflow-y-auto space-y-2.5 font-mono text-xs">
           {activeResult.errorMessage && (
             <div className="flex items-start gap-2 rounded-xl border border-rose-500/20 bg-rose-500/10 p-2.5 text-xs text-rose-400 backdrop-blur-md">
               <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 stroke-[1.5]" />
@@ -117,31 +117,29 @@ export function TestResultTab({
             </div>
           )}
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div className="space-y-1.5">
-              <div className="font-sans text-[11px] font-medium text-[#85858b]">
-                Your output
-              </div>
-              <div
-                className={`rounded-lg border bg-black/40 px-3 py-2 font-mono text-xs min-h-[36px] flex items-center ${
-                  activeResult.passed
-                    ? 'border-white/[0.08] text-[#ededed]'
-                    : 'border-rose-500/25 bg-rose-500/[0.04] text-rose-300'
-                }`}
-              >
-                {activeResult.actualOutput || (activeResult.passed ? '(Empty output)' : '(No output)')}
-              </div>
+          <div className="space-y-1">
+            <div className="font-sans text-[11px] font-medium text-[#85858b]">
+              Your output
             </div>
+            <div
+              className={`rounded-lg border bg-black/40 px-3 py-1.5 font-mono text-xs ${
+                activeResult.passed
+                  ? 'border-white/[0.08] text-[#ededed]'
+                  : 'border-rose-500/25 bg-rose-500/[0.04] text-rose-300'
+              }`}
+            >
+              {activeResult.actualOutput || (activeResult.passed ? '(Empty output)' : '(No output)')}
+            </div>
+          </div>
 
-            <div className="space-y-1.5">
-              <div className="font-sans text-[11px] font-medium text-[#85858b]">
-                Expected output
-              </div>
-              <div className="rounded-lg border border-white/[0.08] bg-black/40 px-3 py-2 font-mono text-xs text-[#ededed] min-h-[36px] flex items-center">
-                {activeResult.hidden && !activeResult.passed
-                  ? '[Hidden test case output]'
-                  : activeResult.expectedOutput}
-              </div>
+          <div className="space-y-1">
+            <div className="font-sans text-[11px] font-medium text-[#85858b]">
+              Expected output
+            </div>
+            <div className="rounded-lg border border-white/[0.08] bg-black/40 px-3 py-1.5 font-mono text-xs text-[#ededed]">
+              {activeResult.hidden && !activeResult.passed
+                ? '[Hidden test case output]'
+                : activeResult.expectedOutput}
             </div>
           </div>
         </div>
