@@ -7,10 +7,13 @@ export async function connectDB(): Promise<typeof mongoose | null> {
     const conn = await mongoose.connect(mongoUri, {
       serverSelectionTimeoutMS: 2000,
     });
-    console.log("Connected to MongoDB");
+    console.log("[server] Connected to MongoDB");
     return conn;
   } catch (error) {
-    console.error("Error connecting to MongoDB:", error);
+    const msg = error instanceof Error ? error.message : String(error);
+    console.warn(
+      `[server] MongoDB is offline (${msg}). DSA debugging & execution engine are fully operational.`
+    );
     return null;
   }
 }
