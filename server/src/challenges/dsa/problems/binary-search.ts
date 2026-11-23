@@ -42,9 +42,7 @@ export const BINARY_SEARCH_PROBLEM: DsaProblem = {
     "nums is sorted in ascending order.",
   ],
   starterCode: {
-    javascript: `// User function Template for javascript
-
-class Solution {
+    javascript: `class Solution {
   /**
    * @param {number[]} nums
    * @param {number} target
@@ -87,9 +85,7 @@ function main() {
 main();
 //} Driver Code Ends
 `,
-    python: `# User function Template for python3
-
-class Solution:
+    python: `class Solution:
     def search(self, nums: list[int], target: int) -> int:
         left, right = 0, len(nums) - 1
         ans = -1
@@ -124,9 +120,7 @@ if __name__ == "__main__":
     main()
 # } Driver Code Ends
 `,
-    cpp: `// User function Template for C++
-
-#include <vector>
+    cpp: `#include <vector>
 using namespace std;
 
 class Solution {
@@ -165,9 +159,7 @@ int main() {
 }
 //} Driver Code Ends
 `,
-    java: `// User function Template for Java
-
-class Solution {
+    java: `class Solution {
     public int search(int[] nums, int target) {
         int left = 0, right = nums.length - 1;
 

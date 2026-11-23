@@ -1,7 +1,6 @@
-import { useState, useRef, useCallback } from 'react';
+import { useRef, useCallback } from 'react';
 import Editor, { loader, type BeforeMount, type OnMount } from '@monaco-editor/react';
 import * as monaco from 'monaco-editor';
-import { Eye, EyeOff, Lock } from 'lucide-react';
 import type { ProjectFile } from '../../types/workspace';
 
 loader.config({ monaco });
@@ -69,8 +68,6 @@ export function CodeEditor({ file, onChange }: Props) {
   const language = getMonacoLanguage(file.language, file.name);
   const editorRef = useRef<monaco.editor.IStandaloneCodeEditor | null>(null);
 
-  const [showDriverCode, setShowDriverCode] = useState(false);
-
   const { hasDriver, userCode, driverCode } = splitDriverCode(file.content);
   const driverCodeRef = useRef(driverCode);
   driverCodeRef.current = driverCode;
@@ -124,28 +121,6 @@ export function CodeEditor({ file, onChange }: Props) {
           <span className="h-1.5 w-1.5 rounded-full bg-emerald-400/80" />
           <span className="font-mono text-[12px] text-[#c8c8ce]">{file.name}</span>
         </div>
-
-        {hasDriver && (
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={() => setShowDriverCode((prev) => !prev)}
-              className="flex cursor-pointer items-center gap-1.5 rounded-full border border-white/[0.08] bg-white/[0.04] px-2.5 py-0.5 text-[11px] font-medium text-[#a1a1a6] transition-colors hover:bg-white/[0.08] hover:text-[#ededed]"
-              title={
-                showDriverCode
-                  ? 'Hide driver code'
-                  : 'Show driver code (read-only I/O parsing)'
-              }
-            >
-              {showDriverCode ? (
-                <EyeOff className="h-3 w-3 stroke-[1.75]" />
-              ) : (
-                <Eye className="h-3 w-3 stroke-[1.75]" />
-              )}
-              <span>{showDriverCode ? 'Hide Driver Code' : 'Show Driver Code'}</span>
-            </button>
-          </div>
-        )}
       </div>
 
       {/* Primary Solution Editor */}
@@ -186,52 +161,6 @@ export function CodeEditor({ file, onChange }: Props) {
           }
         />
       </div>
-
-      {/* Read-Only Driver Code Viewer */}
-      {hasDriver && showDriverCode && (
-        <div className="flex h-56 shrink-0 flex-col border-t border-white/[0.08] bg-[#0c0d12]">
-          <div className="flex h-7 shrink-0 items-center justify-between border-b border-white/[0.06] bg-[#0e0f14] px-4 select-none">
-            <div className="flex items-center gap-2">
-              <Lock className="h-3 w-3 text-emerald-400/90 stroke-[2]" />
-              <span className="font-mono text-[11px] font-medium text-[#c8c8ce]">
-                Driver Code <span className="text-[#85858b] font-normal">(Read-Only)</span>
-              </span>
-            </div>
-            <span className="text-[10px] text-[#85858b]">I/O parsing &amp; test harness</span>
-          </div>
-
-          <div className="min-h-0 flex-1">
-            <Editor
-              height="100%"
-              language={language}
-              value={driverCode}
-              theme="debuglabs-graphite"
-              options={{
-                readOnly: true,
-                domReadOnly: true,
-                fontSize: 12,
-                lineHeight: 20,
-                fontFamily: "'JetBrains Mono', Menlo, Monaco, Consolas, monospace",
-                fontLigatures: true,
-                minimap: { enabled: false },
-                scrollBeyondLastLine: false,
-                automaticLayout: true,
-                tabSize: 2,
-                wordWrap: 'on',
-                lineNumbers: 'on',
-                renderLineHighlight: 'none',
-                padding: { top: 8, bottom: 8 },
-                scrollbar: {
-                  verticalScrollbarSize: 6,
-                  horizontalScrollbarSize: 6,
-                },
-                smoothScrolling: true,
-                cursorBlinking: 'solid',
-              }}
-            />
-          </div>
-        </div>
-      )}
     </div>
   );
 }

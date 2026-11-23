@@ -41,9 +41,7 @@ export const MERGE_INTERVALS_PROBLEM: DsaProblem = {
     "0 <= start <= end <= 10^4",
   ],
   starterCode: {
-    javascript: `// User function Template for javascript
-
-class Solution {
+    javascript: `class Solution {
   /**
    * @param {number[][]} intervals
    * @return {number[][]}
@@ -91,9 +89,7 @@ function main() {
 main();
 //} Driver Code Ends
 `,
-    python: `# User function Template for python3
-
-class Solution:
+    python: `class Solution:
     def merge(self, intervals: list[list[int]]) -> list[list[int]]:
         if len(intervals) <= 1:
             return intervals
@@ -133,9 +129,7 @@ if __name__ == "__main__":
     main()
 # } Driver Code Ends
 `,
-    cpp: `// User function Template for C++
-
-#include <vector>
+    cpp: `#include <vector>
 #include <algorithm>
 using namespace std;
 
@@ -181,9 +175,7 @@ int main() {
 }
 //} Driver Code Ends
 `,
-    java: `// User function Template for Java
-
-import java.util.*;
+    java: `import java.util.*;
 
 class Solution {
     public List<int[]> merge(int[][] intervals) {

@@ -41,9 +41,7 @@ export const VALID_ANAGRAM_PROBLEM: DsaProblem = {
     "s and t consist of lowercase English letters.",
   ],
   starterCode: {
-    javascript: `// User function Template for javascript
-
-class Solution {
+    javascript: `class Solution {
   /**
    * @param {string} s
    * @param {string} t
@@ -78,9 +76,7 @@ function main() {
 main();
 //} Driver Code Ends
 `,
-    python: `# User function Template for python3
-
-class Solution:
+    python: `class Solution:
     def isAnagram(self, s: str, t: str) -> bool:
         counts = {}
         for c in s:
@@ -108,9 +104,7 @@ if __name__ == "__main__":
     main()
 # } Driver Code Ends
 `,
-    cpp: `// User function Template for C++
-
-#include <string>
+    cpp: `#include <string>
 #include <unordered_map>
 using namespace std;
 
@@ -143,9 +137,7 @@ int main() {
 }
 //} Driver Code Ends
 `,
-    java: `// User function Template for Java
-
-import java.util.*;
+    java: `import java.util.*;
 
 class Solution {
     public boolean isAnagram(String s, String t) {
