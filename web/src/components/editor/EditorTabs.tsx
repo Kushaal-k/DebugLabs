@@ -34,17 +34,19 @@ export function EditorTabs({
             <span className="font-mono text-[12px] truncate max-w-[140px]">
               {file.name}
             </span>
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                onCloseTab(file.id);
-              }}
-              className="p-0.5 rounded-[3px] text-[#85858b] hover:text-[#ededed] hover:bg-white/[0.08] cursor-pointer transition-colors duration-100"
-              title={`Close ${file.name}`}
-            >
-              <X className="w-3 h-3 stroke-[1.5]" />
-            </button>
+            {openFiles.length > 1 && (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onCloseTab(file.id);
+                }}
+                className="p-0.5 rounded-[3px] text-[#85858b] hover:text-[#ededed] hover:bg-white/[0.08] cursor-pointer transition-colors duration-100"
+                title={`Close ${file.name}`}
+              >
+                <X className="w-3 h-3 stroke-[1.5]" />
+              </button>
+            )}
           </div>
         );
       })}
