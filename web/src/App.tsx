@@ -1,7 +1,6 @@
 import { useState, useCallback, useEffect } from 'react';
-import { BookOpen, FolderTree } from 'lucide-react';
+import { BookOpen } from 'lucide-react';
 import { DsaDashboard } from './components/dsa/DsaDashboard';
-import { DEBUGLABS_SCENARIO_FILES } from './data/mockScenarios';
 import { DEFAULT_DSA_PROBLEMS } from './data/dsaScenarios';
 import type { ProjectFile } from './types/workspace';
 import type {
@@ -12,7 +11,6 @@ import type {
   DsaSubmissionResult,
 } from './types/dsa';
 import type { SupportedLanguage } from '@debugLabs/shared';
-import { FileExplorer } from './components/explorer/FileExplorer';
 import { CodeEditor } from './components/editor/CodeEditor';
 import { EditorToolbar } from './components/editor/EditorToolbar';
 import { EditorTabs } from './components/editor/EditorTabs';
@@ -29,25 +27,39 @@ import {
   submitDsaSolution,
 } from './services/dsaService';
 
-export type LeftSidebarTab = 'dsa' | 'explorer';
+const FILE_NAMES: Record<SupportedLanguage, string> = {
+  javascript: 'solution.js',
+  python: 'solution.py',
+  cpp: 'solution.cpp',
+  java: 'Solution.java',
+  c: 'solution.c',
+  csharp: 'Solution.cs',
+};
 
 export default function App() {
   const [showDashboard, setShowDashboard] = useState(true);
 
-  const [files, setFiles] = useState<ProjectFile[]>(
-    DEBUGLABS_SCENARIO_FILES
+  const [currentProblem, setCurrentProblem] = useState<DsaProblem>(
+    DEFAULT_DSA_PROBLEMS[0]
   );
 
-  const [openTabIds, setOpenTabIds] = useState<string[]>([
-    'dsa-solution',
-    'server-index',
-    'problem-md',
+  const [selectedLanguage, setSelectedLanguage] =
+    useState<SupportedLanguage>('javascript');
+
+  const [files, setFiles] = useState<ProjectFile[]>([
+    {
+      id: 'dsa-solution',
+      name: FILE_NAMES['javascript'],
+      folder: 'root',
+      language: 'javascript',
+      content: DEFAULT_DSA_PROBLEMS[0].starterCode['javascript'] || '',
+    },
   ]);
+
+  const [openTabIds, setOpenTabIds] = useState<string[]>(['dsa-solution']);
 
   const [activeFileId, setActiveFileId] =
     useState<string>('dsa-solution');
-
-  const [leftTab, setLeftTab] = useState<LeftSidebarTab>('dsa');
 
   const [bottomTab, setBottomTab] =
     useState<BottomPanelTab>('testcases');
@@ -58,13 +70,6 @@ export default function App() {
 
   const [problems, setProblems] = useState<DsaProblemSummary[]>([]);
   const [isLoadingProblems, setIsLoadingProblems] = useState<boolean>(true);
-
-  const [currentProblem, setCurrentProblem] = useState<DsaProblem>(
-    DEFAULT_DSA_PROBLEMS[0]
-  );
-
-  const [selectedLanguage, setSelectedLanguage] =
-    useState<SupportedLanguage>('javascript');
 
   const [testCases, setTestCases] = useState<DsaTestCase[]>(
     DEFAULT_DSA_PROBLEMS[0].testCases
@@ -94,17 +99,16 @@ export default function App() {
           if (isMounted && firstProblem) {
             setCurrentProblem(firstProblem);
             setTestCases(firstProblem.testCases);
-            setFiles((prev) =>
-              prev.map((file) =>
-                file.id === 'dsa-solution'
-                  ? {
-                      ...file,
-                      content:
-                        firstProblem.starterCode[selectedLanguage] || file.content,
-                    }
-                  : file
-              )
-            );
+            setFiles([
+              {
+                id: 'dsa-solution',
+                name: FILE_NAMES[selectedLanguage] || 'solution.js',
+                folder: 'root',
+                language: selectedLanguage,
+                content:
+                  firstProblem.starterCode[selectedLanguage] || '',
+              },
+            ]);
           }
         }
       } catch (err) {
@@ -117,7 +121,7 @@ export default function App() {
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [selectedLanguage]);
 
   const activeFile =
     files.find((file) => file.id === activeFileId) || null;
@@ -135,13 +139,14 @@ export default function App() {
   };
 
   const handleCloseTab = (id: string) => {
+    if (openTabIds.length <= 1) return;
     const updated = openTabIds.filter((tabId) => tabId !== id);
 
     setOpenTabIds(updated);
 
     if (activeFileId === id) {
       setActiveFileId(
-        updated.length > 0 ? updated[updated.length - 1] : ''
+        updated.length > 0 ? updated[updated.length - 1] : 'dsa-solution'
       );
     }
   };
@@ -161,26 +166,21 @@ export default function App() {
   };
 
   const handleReset = () => {
-    setFiles((prev) =>
-      prev.map((file) => {
-        if (file.id === 'dsa-solution') {
-          return {
-            ...file,
-            content:
-              currentProblem.starterCode[selectedLanguage] ||
-              DEBUGLABS_SCENARIO_FILES.find((f) => f.id === 'dsa-solution')?.content ||
-              file.content,
-          };
-        }
-        return file;
-      })
-    );
+    setFiles([
+      {
+        id: 'dsa-solution',
+        name: FILE_NAMES[selectedLanguage] || 'solution.js',
+        folder: 'root',
+        language: selectedLanguage,
+        content: currentProblem.starterCode[selectedLanguage] || '',
+      },
+    ]);
     setTestCases(currentProblem.testCases);
     setDsaRunSummary(null);
     setDsaSubmissionResult(null);
     setFailureCount(0);
     setActiveFileId('dsa-solution');
-    setOpenTabIds(['dsa-solution', 'server-index', 'problem-md']);
+    setOpenTabIds(['dsa-solution']);
 
     setLogs((previous) => [
       ...previous,
@@ -191,30 +191,15 @@ export default function App() {
   const handleSelectLanguage = (newLanguage: SupportedLanguage) => {
     setSelectedLanguage(newLanguage);
 
-    const fileNames: Record<SupportedLanguage, string> = {
-      javascript: 'solution.js',
-      python: 'solution.py',
-      cpp: 'solution.cpp',
-      java: 'Solution.java',
-      c: 'solution.c',
-      csharp: 'Solution.cs',
-    };
-
-    setFiles((previous) =>
-      previous.map((file) => {
-        if (file.id === 'dsa-solution') {
-          return {
-            ...file,
-            name: fileNames[newLanguage],
-            language: newLanguage,
-            content:
-              currentProblem.starterCode[newLanguage] || file.content,
-          };
-        }
-
-        return file;
-      })
-    );
+    setFiles([
+      {
+        id: 'dsa-solution',
+        name: FILE_NAMES[newLanguage] || 'solution.js',
+        folder: 'root',
+        language: newLanguage,
+        content: currentProblem.starterCode[newLanguage] || '',
+      },
+    ]);
 
     setLogs((previous) => [
       ...previous,
@@ -230,19 +215,15 @@ export default function App() {
       setDsaRunSummary(null);
       setDsaSubmissionResult(null);
 
-      setFiles((previous) =>
-        previous.map((file) => {
-          if (file.id === 'dsa-solution') {
-            return {
-              ...file,
-              content:
-                problem.starterCode[selectedLanguage] || file.content,
-            };
-          }
-
-          return file;
-        })
-      );
+      setFiles([
+        {
+          id: 'dsa-solution',
+          name: FILE_NAMES[selectedLanguage] || 'solution.js',
+          folder: 'root',
+          language: selectedLanguage,
+          content: problem.starterCode[selectedLanguage] || '',
+        },
+      ]);
 
       setLogs((previous) => [
         ...previous,
@@ -497,15 +478,10 @@ export default function App() {
               (file) => file.id === 'dsa-solution'
             );
 
-            const originalSolution = DEBUGLABS_SCENARIO_FILES.find(
-              (file) => file.id === 'dsa-solution'
-            );
-
             const hasEdits =
               solution &&
               solution.content !==
-                currentProblem.starterCode[selectedLanguage] &&
-              solution.content !== originalSolution?.content;
+                currentProblem.starterCode[selectedLanguage];
 
             if (
               hasEdits &&
@@ -561,48 +537,19 @@ export default function App() {
 
       <div className="flex flex-1 overflow-hidden">
         <aside className="w-80 bg-[#0f0f10] border-r border-white/[0.08] flex flex-col select-none shrink-0 overflow-hidden">
-          <div className="h-9 bg-[#0f0f10] border-b border-white/[0.08] flex items-center shrink-0">
-            <button
-              type="button"
-              onClick={() => setLeftTab('dsa')}
-              className={`flex-1 h-full flex items-center justify-center gap-2 text-xs border-r border-white/[0.06] cursor-pointer transition-colors ${
-                leftTab === 'dsa'
-                  ? 'bg-[#141415] text-[#ededed] font-medium border-b-2 border-b-emerald-400'
-                  : 'text-[#85858b] hover:text-[#ededed] hover:bg-[#141415]/50'
-              }`}
-            >
+          <div className="h-9 bg-[#0f0f10] border-b border-white/[0.08] flex items-center px-3.5 shrink-0">
+            <div className="flex items-center gap-2 text-xs font-medium text-[#ededed]">
               <BookOpen className="w-3.5 h-3.5 stroke-[1.5] text-emerald-400" />
-              <span>DSA Question</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setLeftTab('explorer')}
-              className={`flex-1 h-full flex items-center justify-center gap-2 text-xs cursor-pointer transition-colors ${
-                leftTab === 'explorer'
-                  ? 'bg-[#141415] text-[#ededed] font-medium border-b-2 border-b-emerald-400'
-                  : 'text-[#85858b] hover:text-[#ededed] hover:bg-[#141415]/50'
-              }`}
-            >
-              <FolderTree className="w-3.5 h-3.5 stroke-[1.5] text-sky-400" />
-              <span>Explorer</span>
-            </button>
+              <span>DSA Problem</span>
+            </div>
           </div>
 
           <div className="flex-1 overflow-hidden">
-            {leftTab === 'dsa' ? (
-              <DsaProblemTab
-                currentProblem={currentProblem}
-                problems={problems}
-                onSelectProblem={handleSelectProblem}
-              />
-            ) : (
-              <FileExplorer
-                files={files}
-                activeFileId={activeFileId}
-                onSelectFile={handleSelectFile}
-              />
-            )}
+            <DsaProblemTab
+              currentProblem={currentProblem}
+              problems={problems}
+              onSelectProblem={handleSelectProblem}
+            />
           </div>
         </aside>
 
