@@ -1,4 +1,5 @@
 export type {
+  SupportedLanguage,
   DsaDifficulty,
   DsaVerdictStatus,
   DsaRunStatus,

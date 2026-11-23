@@ -40,6 +40,8 @@ export function getDsaProblemSummaries(filters?: {
     difficulty: p.difficulty,
     category: p.category,
     tags: p.tags,
+    description: p.description,
+    languages: Object.keys(p.starterCode) as import("@debugLabs/shared").SupportedLanguage[],
   }));
 }
 
@@ -58,6 +60,9 @@ export function getDsaProblemForClient(id: string): DsaProblem | null {
     category: problem.category,
     tags: problem.tags,
     description: problem.description,
+    bugDescription: problem.bugDescription,
+    hints: problem.hints,
+    entrypointMethod: problem.entrypointMethod,
     examples: problem.examples,
     constraints: problem.constraints,
     starterCode: problem.starterCode,

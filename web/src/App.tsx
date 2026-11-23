@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { BookOpen, FolderTree } from 'lucide-react';
 import { DsaDashboard } from './components/dsa/DsaDashboard';
 import { DEBUGLABS_SCENARIO_FILES } from './data/mockScenarios';
@@ -6,8 +6,10 @@ import { DEFAULT_DSA_PROBLEMS } from './data/dsaScenarios';
 import type { ProjectFile } from './types/workspace';
 import type {
   DsaProblem,
+  DsaProblemSummary,
   DsaTestCase,
   DsaRunSummary,
+  DsaSubmissionResult,
 } from './types/dsa';
 import type { SupportedLanguage } from '@debugLabs/shared';
 import { FileExplorer } from './components/explorer/FileExplorer';
@@ -20,7 +22,12 @@ import {
 } from './components/terminal/OutputTerminal';
 import { DsaProblemTab } from './components/dsa/DsaProblemTab';
 import { executeSingleFile } from './services/executionService';
-import { runDsaTestCases } from './services/dsaRunnerService';
+import {
+  fetchDsaProblems,
+  fetchDsaProblem,
+  runDsaTestCases,
+  submitDsaSolution,
+} from './services/dsaService';
 
 export type LeftSidebarTab = 'dsa' | 'explorer';
 
@@ -49,6 +56,9 @@ export default function App() {
   const [isRunning, setIsRunning] = useState<boolean>(false);
   const [failureCount, setFailureCount] = useState<number>(0);
 
+  const [problems, setProblems] = useState<DsaProblemSummary[]>([]);
+  const [isLoadingProblems, setIsLoadingProblems] = useState<boolean>(true);
+
   const [currentProblem, setCurrentProblem] = useState<DsaProblem>(
     DEFAULT_DSA_PROBLEMS[0]
   );
@@ -63,7 +73,51 @@ export default function App() {
   const [dsaRunSummary, setDsaRunSummary] =
     useState<DsaRunSummary | null>(null);
 
+  const [dsaSubmissionResult, setDsaSubmissionResult] =
+    useState<DsaSubmissionResult | null>(null);
+
   const [isDsaRunning, setIsDsaRunning] = useState<boolean>(false);
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+
+  // Fetch problems list from backend API on mount
+  useEffect(() => {
+    let isMounted = true;
+    async function loadProblems() {
+      setIsLoadingProblems(true);
+      try {
+        const list = await fetchDsaProblems();
+        if (!isMounted) return;
+        if (list && list.length > 0) {
+          setProblems(list);
+          // Load the initial problem from backend if available
+          const firstProblem = await fetchDsaProblem(list[0].id);
+          if (isMounted && firstProblem) {
+            setCurrentProblem(firstProblem);
+            setTestCases(firstProblem.testCases);
+            setFiles((prev) =>
+              prev.map((file) =>
+                file.id === 'dsa-solution'
+                  ? {
+                      ...file,
+                      content:
+                        firstProblem.starterCode[selectedLanguage] || file.content,
+                    }
+                  : file
+              )
+            );
+          }
+        }
+      } catch (err) {
+        console.warn('Could not load problems from backend on initial mount:', err);
+      } finally {
+        if (isMounted) setIsLoadingProblems(false);
+      }
+    }
+    loadProblems();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   const activeFile =
     files.find((file) => file.id === activeFileId) || null;
@@ -107,11 +161,23 @@ export default function App() {
   };
 
   const handleReset = () => {
-    setFiles(DEBUGLABS_SCENARIO_FILES);
-    setCurrentProblem(DEFAULT_DSA_PROBLEMS[0]);
-    setSelectedLanguage('javascript');
-    setTestCases(DEFAULT_DSA_PROBLEMS[0].testCases);
+    setFiles((prev) =>
+      prev.map((file) => {
+        if (file.id === 'dsa-solution') {
+          return {
+            ...file,
+            content:
+              currentProblem.starterCode[selectedLanguage] ||
+              DEBUGLABS_SCENARIO_FILES.find((f) => f.id === 'dsa-solution')?.content ||
+              file.content,
+          };
+        }
+        return file;
+      })
+    );
+    setTestCases(currentProblem.testCases);
     setDsaRunSummary(null);
+    setDsaSubmissionResult(null);
     setFailureCount(0);
     setActiveFileId('dsa-solution');
     setOpenTabIds(['dsa-solution', 'server-index', 'problem-md']);
@@ -156,29 +222,38 @@ export default function App() {
     ]);
   };
 
-  const handleSelectProblem = (problem: DsaProblem) => {
-    setCurrentProblem(problem);
-    setTestCases(problem.testCases);
-    setDsaRunSummary(null);
+  const handleSelectProblem = async (problemId: string) => {
+    try {
+      const problem = await fetchDsaProblem(problemId);
+      setCurrentProblem(problem);
+      setTestCases(problem.testCases);
+      setDsaRunSummary(null);
+      setDsaSubmissionResult(null);
 
-    setFiles((previous) =>
-      previous.map((file) => {
-        if (file.id === 'dsa-solution') {
-          return {
-            ...file,
-            content:
-              problem.starterCode[selectedLanguage] || file.content,
-          };
-        }
+      setFiles((previous) =>
+        previous.map((file) => {
+          if (file.id === 'dsa-solution') {
+            return {
+              ...file,
+              content:
+                problem.starterCode[selectedLanguage] || file.content,
+            };
+          }
 
-        return file;
-      })
-    );
+          return file;
+        })
+      );
 
-    setLogs((previous) => [
-      ...previous,
-      `\x1b[36m[DSA Question]\x1b[0m Loaded "${problem.title}" (${problem.difficulty})`,
-    ]);
+      setLogs((previous) => [
+        ...previous,
+        `\x1b[36m[DSA Lab]\x1b[0m Loaded "${problem.title}" (${problem.difficulty})`,
+      ]);
+    } catch (err: any) {
+      setLogs((previous) => [
+        ...previous,
+        `\x1b[31m[DSA Error]\x1b[0m Failed to load problem: ${err.message || String(err)}\x1b[0m`,
+      ]);
+    }
   };
 
   const handleUpdateTestCase = (updated: DsaTestCase) => {
@@ -216,6 +291,7 @@ export default function App() {
     }
 
     setIsDsaRunning(true);
+    setDsaSubmissionResult(null);
     setBottomTab('results');
 
     setLogs((previous) => [
@@ -226,23 +302,27 @@ export default function App() {
 
     try {
       const summary = await runDsaTestCases(
-        solutionFile.content,
+        currentProblem.id,
         selectedLanguage,
-        currentProblem,
+        solutionFile.content,
         testCases
       );
 
       setDsaRunSummary(summary);
 
+      const verdict =
+        summary.verdict ||
+        (summary.status === 'passed' ? 'Accepted' : 'Wrong Answer');
+
       if (summary.status === 'passed') {
         setLogs((previous) => [
           ...previous,
-          `\x1b[32m✓ All ${summary.total} test cases passed!\x1b[0m \x1b[90m(${summary.executionTimeMs}ms)\x1b[0m`,
+          `\x1b[32m✓ ${verdict}: All ${summary.total} test cases passed!\x1b[0m \x1b[90m(${summary.executionTimeMs}ms)\x1b[0m`,
         ]);
       } else {
         setLogs((previous) => [
           ...previous,
-          `\x1b[31m✗ ${summary.passed}/${summary.total} test cases passed. ${summary.failed} failed.\x1b[0m \x1b[90m(${summary.executionTimeMs}ms)\x1b[0m`,
+          `\x1b[31m✗ ${verdict}: ${summary.passed}/${summary.total} test cases passed. ${summary.failed} failed.\x1b[0m \x1b[90m(${summary.executionTimeMs}ms)\x1b[0m`,
         ]);
       }
     } catch (error) {
@@ -260,10 +340,71 @@ export default function App() {
     }
   }, [
     activeFile,
-    currentProblem,
+    currentProblem.id,
+    currentProblem.title,
     files,
     selectedLanguage,
     testCases,
+  ]);
+
+  const handleSubmitSolution = useCallback(async () => {
+    const solutionFile =
+      files.find((file) => file.id === 'dsa-solution') || activeFile;
+
+    if (!solutionFile) {
+      return;
+    }
+
+    setIsSubmitting(true);
+    setDsaRunSummary(null);
+    setBottomTab('results');
+
+    setLogs((previous) => [
+      ...previous,
+      '',
+      `\x1b[35m→ Submitting solution for ${currentProblem.title} (${selectedLanguage})...\x1b[0m`,
+      `\x1b[90mRunning all test cases including hidden grading tests...\x1b[0m`,
+    ]);
+
+    try {
+      const result = await submitDsaSolution(
+        currentProblem.id,
+        selectedLanguage,
+        solutionFile.content
+      );
+
+      setDsaSubmissionResult(result);
+
+      if (result.status === 'Accepted') {
+        setLogs((previous) => [
+          ...previous,
+          `\x1b[32m🎉 Accepted! All ${result.passedCount}/${result.totalCount} test cases passed!\x1b[0m \x1b[90m(${result.executionTimeMs}ms)\x1b[0m`,
+        ]);
+      } else {
+        setLogs((previous) => [
+          ...previous,
+          `\x1b[31m✗ ${result.status}: ${result.passedCount}/${result.totalCount} test cases passed.\x1b[0m \x1b[90m(${result.executionTimeMs}ms)\x1b[0m`,
+        ]);
+      }
+    } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : 'Error submitting solution';
+
+      setLogs((previous) => [
+        ...previous,
+        `\x1b[31mSubmission error: ${message}\x1b[0m`,
+      ]);
+    } finally {
+      setIsSubmitting(false);
+    }
+  }, [
+    activeFile,
+    currentProblem.id,
+    currentProblem.title,
+    files,
+    selectedLanguage,
   ]);
 
   const handleRunFile = async () => {
@@ -348,6 +489,8 @@ export default function App() {
   if (showDashboard) {
     return (
       <DsaDashboard
+        problems={problems}
+        isLoading={isLoadingProblems}
         onOpenProblem={(problem) => {
           if (problem.id !== currentProblem.id) {
             const solution = files.find(
@@ -373,7 +516,7 @@ export default function App() {
               return;
             }
 
-            handleSelectProblem(problem);
+            handleSelectProblem(problem.id);
           }
 
           handleSelectFile('dsa-solution');
@@ -412,6 +555,8 @@ export default function App() {
         onSelectLanguage={handleSelectLanguage}
         onRunTestCases={handleRunTestCases}
         isDsaRunning={isDsaRunning}
+        onSubmitSolution={handleSubmitSolution}
+        isSubmitting={isSubmitting}
       />
 
       <div className="flex flex-1 overflow-hidden">
@@ -448,6 +593,7 @@ export default function App() {
             {leftTab === 'dsa' ? (
               <DsaProblemTab
                 currentProblem={currentProblem}
+                problems={problems}
                 onSelectProblem={handleSelectProblem}
               />
             ) : (
@@ -499,6 +645,8 @@ export default function App() {
             onRunTestCases={handleRunTestCases}
             dsaRunSummary={dsaRunSummary}
             isDsaRunning={isDsaRunning}
+            dsaSubmissionResult={dsaSubmissionResult}
+            isSubmitting={isSubmitting}
           />
         </div>
       </div>
