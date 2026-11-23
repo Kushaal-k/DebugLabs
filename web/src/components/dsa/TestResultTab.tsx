@@ -70,7 +70,6 @@ export function TestResultTab({
 
           <span className="text-xs font-mono text-[#a1a1a6] tabular-nums">
             {passedCount}/{totalCount} test cases passed
-            {isSubmission && ' (all test suites)'}
           </span>
         </div>
 
