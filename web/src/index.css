@@ -88,11 +88,11 @@ body {
 
 @layer components {
   .glass {
-    background: rgba(18, 19, 24, 0.68);
-    backdrop-filter: blur(24px) saturate(160%);
-    -webkit-backdrop-filter: blur(24px) saturate(160%);
+    background: rgba(18, 19, 24, 0.60);
+    backdrop-filter: blur(28px) saturate(180%);
+    -webkit-backdrop-filter: blur(28px) saturate(180%);
     border: 1px solid rgba(255, 255, 255, 0.09);
-    box-shadow: 0 4px 24px -1px rgba(0, 0, 0, 0.35), inset 0 1px 0 0 rgba(255, 255, 255, 0.07);
+    box-shadow: 0 4px 24px -1px rgba(0, 0, 0, 0.35), inset 0 1px 0 0 rgba(255, 255, 255, 0.08);
   }
 
   .glass-interactive {
@@ -103,21 +103,21 @@ body {
   }
 
   .glass-interactive:hover {
-    background: rgba(26, 27, 34, 0.78);
+    background: rgba(26, 27, 34, 0.72);
     border-color: rgba(255, 255, 255, 0.16);
     box-shadow: 0 8px 30px -2px rgba(0, 0, 0, 0.4), inset 0 1px 0 0 rgba(255, 255, 255, 0.1);
   }
 
   .glass-panel {
-    background: rgba(13, 14, 18, 0.70);
-    backdrop-filter: blur(24px) saturate(170%);
-    -webkit-backdrop-filter: blur(24px) saturate(170%);
+    background: rgba(12, 13, 18, 0.58);
+    backdrop-filter: blur(28px) saturate(180%);
+    -webkit-backdrop-filter: blur(28px) saturate(180%);
     border: 1px solid rgba(255, 255, 255, 0.08);
-    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.4), inset 0 1px 0 0 rgba(255, 255, 255, 0.05);
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.4), inset 0 1px 0 0 rgba(255, 255, 255, 0.06);
   }
 
   .glass-inset {
-    background: rgba(8, 9, 12, 0.55);
+    background: rgba(8, 9, 12, 0.45);
     backdrop-filter: blur(16px);
     -webkit-backdrop-filter: blur(16px);
     border: 1px solid rgba(255, 255, 255, 0.06);
