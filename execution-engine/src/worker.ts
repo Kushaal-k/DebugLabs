@@ -37,11 +37,3 @@ worker.on("failed", (job, err) => {
     console.error(`[Worker] Job ${job?.id} failed:`, err);
 });
 
-let hasLoggedRedisWorker = false;
-worker.on("error", (err) => {
-    if (!hasLoggedRedisWorker) {
-        hasLoggedRedisWorker = true;
-        console.info(`[execution-engine] Redis is offline (${err.message}). Background queue worker idle, direct execution active.`);
-    }
-});
-

@@ -23,21 +23,6 @@ export const io = new Server(httpServer, {
 });
 
 app.use(express.json());
-app.use((_req, res, next) => {
-  res.header("Access-Control-Allow-Origin", "*");
-  res.header("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE,OPTIONS");
-  res.header("Access-Control-Allow-Headers", "Content-Type,Authorization");
-  if (_req.method === "OPTIONS") {
-    res.sendStatus(204);
-    return;
-  }
-  next();
-});
-
-app.get("/", (_req, res) => {
-  const webUrl = process.env.WEB_URL ?? "http://localhost:5173";
-  res.redirect(webUrl);
-});
 
 app.get("/health", (_req, res) => {
   const result: ServiceStatus = {
@@ -63,11 +48,12 @@ export const connection = {
 export const executionQueue = new Queue("execution-queue", { connection });
 export const queueEvents = new QueueEvents("execution-queue", { connection });
 
-let hasLoggedRedisWarning = false;
-const logRedisError = (_source: string, error: Error) => {
-  if (!hasLoggedRedisWarning) {
-    hasLoggedRedisWarning = true;
-    console.info(`[server] Redis is offline (${error.message}). Direct execution mode active for DSA debugging.`);
+let lastRedisErrorLog = 0;
+const logRedisError = (source: string, error: Error) => {
+  const now = Date.now();
+  if (now - lastRedisErrorLog > 8000) {
+    lastRedisErrorLog = now;
+    console.warn(`[server] Redis connection issue on ${source}: ${error.message} (Is Redis running on ${redisHost}?)`);
   }
 };
 
