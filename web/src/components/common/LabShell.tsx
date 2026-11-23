@@ -8,6 +8,7 @@ export function LabShell({ children }: Props) {
   return (
     <div className="lab-shell">
       <div className="lab-ambient" aria-hidden="true">
+        <div className="lab-grid" />
         <span className="orb orb-emerald" />
         <span className="orb orb-violet" />
         <span className="orb orb-sky" />
