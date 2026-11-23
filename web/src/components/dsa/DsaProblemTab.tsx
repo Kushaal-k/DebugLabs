@@ -1,11 +1,10 @@
 import { useMemo } from 'react';
 import {
-  BookOpen,
   Tag,
   Layers,
   ChevronDown,
-  AlertTriangle,
-  Lightbulb,
+  AlertCircle,
+  HelpCircle,
 } from 'lucide-react';
 import type { DsaProblem, DsaProblemSummary } from '../../types/dsa';
 import { DEFAULT_DSA_PROBLEMS } from '../../data/dsaScenarios';
@@ -24,7 +23,7 @@ export function DsaProblemTab({
   const difficultyColor = useMemo(() => {
     switch (currentProblem.difficulty) {
       case 'Easy':
-        return 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20';
+        return 'bg-emerald-500/10 text-[#4cc38a] border-emerald-500/20';
       case 'Medium':
         return 'bg-amber-500/10 text-amber-400 border-amber-500/20';
       case 'Hard':
@@ -37,54 +36,49 @@ export function DsaProblemTab({
   return (
     <div className="flex-1 flex flex-col h-full bg-[#0f0f10] text-[#ededed] overflow-y-auto custom-scrollbar select-text">
       {/* Problem Header */}
-      <div className="p-4 border-b border-white/[0.08] bg-[#141415]/60 sticky top-0 z-10 backdrop-blur-sm">
-        <div className="flex items-center justify-between mb-2">
-          <div className="flex items-center gap-1.5 text-xs text-[#85858b]">
-            <BookOpen className="w-3.5 h-3.5 text-emerald-400 stroke-[1.75]" />
-            <span>DSA Question</span>
-          </div>
+      <div className="p-4 border-b border-white/[0.08] bg-[#0f0f10] sticky top-0 z-10">
+        <div className="flex items-center justify-between gap-3 mb-2.5">
+          <h1 className="text-sm font-semibold text-[#ededed] tracking-tight truncate">
+            {currentProblem.title}
+          </h1>
 
           {/* Quick Problem Switcher */}
-          <div className="relative">
+          <div className="relative shrink-0">
             <select
               value={currentProblem.id}
               onChange={(e) => {
                 onSelectProblem(e.target.value);
               }}
-              className="bg-[#1e1e21] border border-white/[0.08] hover:border-white/[0.15] text-[#ededed] text-xs rounded px-2.5 py-1 pr-6 cursor-pointer appearance-none outline-none font-mono"
+              className="h-7 bg-[#19191b] hover:bg-[#232325] border border-white/[0.08] text-[#ededed] text-xs rounded-md px-2.5 pr-6 cursor-pointer appearance-none outline-none font-sans transition-colors"
             >
               {problemList.map((prob) => (
-                <option key={prob.id} value={prob.id} className="bg-[#18181b]">
+                <option key={prob.id} value={prob.id} className="bg-[#19191b]">
                   {prob.title}
                 </option>
               ))}
             </select>
-            <ChevronDown className="w-3.5 h-3.5 text-[#85858b] absolute right-1.5 top-1.5 pointer-events-none" />
+            <ChevronDown className="w-3.5 h-3.5 text-[#85858b] stroke-[1.5] absolute right-2 top-2 pointer-events-none" />
           </div>
         </div>
 
-        <h1 className="text-base font-semibold text-[#ededed] mb-2 tracking-tight">
-          {currentProblem.title}
-        </h1>
-
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex flex-wrap items-center gap-1.5">
           <span
-            className={`text-[11px] font-medium px-2 py-0.5 rounded border ${difficultyColor}`}
+            className={`text-[11px] font-medium px-2 py-0.5 rounded-[4px] border ${difficultyColor}`}
           >
             {currentProblem.difficulty}
           </span>
 
-          <span className="flex items-center gap-1 text-[11px] text-[#a1a1a6] bg-[#1a1a1d] px-2 py-0.5 rounded border border-white/[0.06]">
-            <Layers className="w-3 h-3 text-[#85858b]" />
+          <span className="flex items-center gap-1 text-[11px] text-[#a1a1a6] bg-[#19191b] px-2 py-0.5 rounded-[4px] border border-white/[0.06]">
+            <Layers className="w-3 h-3 text-[#85858b] stroke-[1.5]" />
             {currentProblem.category}
           </span>
 
           {currentProblem.tags.map((tag) => (
             <span
               key={tag}
-              className="flex items-center gap-1 text-[11px] text-[#85858b] bg-[#141415] px-2 py-0.5 rounded border border-white/[0.04]"
+              className="flex items-center gap-1 text-[11px] text-[#85858b] bg-[#141415] px-2 py-0.5 rounded-[4px] border border-white/[0.06]"
             >
-              <Tag className="w-2.5 h-2.5" />
+              <Tag className="w-3 h-3 stroke-[1.5]" />
               {tag}
             </span>
           ))}
@@ -92,37 +86,37 @@ export function DsaProblemTab({
       </div>
 
       {/* Problem Content */}
-      <div className="p-4 space-y-6 text-xs leading-relaxed text-[#c4c4c8]">
-        {/* Bug Overview if available */}
+      <div className="p-4 space-y-6 text-xs leading-relaxed text-[#a1a1a6]">
+        {/* Bug Overview */}
         {currentProblem.bugDescription && (
-          <section className="bg-amber-500/10 border border-amber-500/20 rounded-md p-3 space-y-1.5">
-            <div className="flex items-center gap-1.5 text-xs font-semibold text-amber-400">
-              <AlertTriangle className="w-3.5 h-3.5" />
-              <span>Bug Overview</span>
+          <section className="bg-[#19191b] border border-white/[0.08] rounded-lg p-3.5 space-y-2">
+            <div className="flex items-center gap-2 text-xs font-medium text-[#ededed]">
+              <AlertCircle className="w-3.5 h-3.5 text-amber-400 stroke-[1.5]" />
+              <span>Bug overview</span>
             </div>
-            <p className="text-[12px] text-[#e4e4e7] leading-relaxed">
+            <p className="text-[12px] text-[#d4d4d8] leading-relaxed">
               {currentProblem.bugDescription}
             </p>
           </section>
         )}
 
-        {/* Hints if available */}
+        {/* Debugging Hints */}
         {currentProblem.hints && currentProblem.hints.length > 0 && (
           <section className="space-y-2">
-            <h2 className="text-xs font-semibold uppercase tracking-wider text-[#85858b] flex items-center gap-1.5">
-              <Lightbulb className="w-3.5 h-3.5 text-amber-400" />
-              <span>Debugging Hints</span>
+            <h2 className="text-xs font-medium text-[#85858b] flex items-center gap-1.5">
+              <HelpCircle className="w-3.5 h-3.5 stroke-[1.5]" />
+              <span>Debugging hints</span>
             </h2>
             <div className="space-y-1.5">
               {currentProblem.hints.map((hint, i) => (
                 <details
                   key={i}
-                  className="group bg-[#141415] border border-white/[0.06] rounded p-2.5 text-[12px] text-[#c4c4c8]"
+                  className="group bg-[#19191b] border border-white/[0.08] rounded-lg p-3 text-[12px] text-[#a1a1a6]"
                 >
-                  <summary className="cursor-pointer font-medium text-emerald-400 select-none text-[11px] hover:text-emerald-300">
+                  <summary className="cursor-pointer font-medium text-[#ededed] select-none text-[11px] hover:text-[#4cc38a] transition-colors">
                     Hint {i + 1}
                   </summary>
-                  <p className="mt-2 pl-2 border-l-2 border-emerald-500/30 text-[11px] leading-5 text-[#a1a1a6]">
+                  <p className="mt-2 pl-2 border-l border-white/[0.12] text-[11px] leading-5 text-[#a1a1a6]">
                     {hint}
                   </p>
                 </details>
@@ -133,36 +127,36 @@ export function DsaProblemTab({
 
         {/* Description */}
         <section>
-          <div className="whitespace-pre-line text-[#d4d4d8] font-sans text-[13px] leading-6">
+          <div className="whitespace-pre-line text-[#ededed] font-sans text-[13px] leading-6">
             {currentProblem.description}
           </div>
         </section>
 
         {/* Examples */}
         <section className="space-y-3">
-          <h2 className="text-xs font-semibold uppercase tracking-wider text-[#85858b]">
+          <h2 className="text-xs font-medium text-[#85858b]">
             Examples
           </h2>
           {currentProblem.examples.map((example) => (
             <div
               key={example.id}
-              className="bg-[#141415] border border-white/[0.06] rounded-[6px] p-3 space-y-2"
+              className="bg-[#19191b] border border-white/[0.08] rounded-lg p-3.5 space-y-2"
             >
               <div className="text-[12px] font-medium text-[#ededed]">
-                Example {example.id}:
+                Example {example.id}
               </div>
-              <div className="space-y-1 font-mono text-[11px] bg-[#0d0d0e] p-2 rounded border border-white/[0.04]">
+              <div className="space-y-1.5 font-mono text-[11px] bg-[#0f0f10] p-2.5 rounded-md border border-white/[0.04]">
                 <div>
-                  <span className="text-[#85858b]">Input: </span>
-                  <span className="text-emerald-400">{example.input}</span>
+                  <span className="text-[#85858b]">Input </span>
+                  <span className="text-[#ededed]">{example.input}</span>
                 </div>
                 <div>
-                  <span className="text-[#85858b]">Output: </span>
-                  <span className="text-sky-400">{example.output}</span>
+                  <span className="text-[#85858b]">Output </span>
+                  <span className="text-[#ededed]">{example.output}</span>
                 </div>
                 {example.explanation && (
-                  <div className="text-[#a1a1a6] text-[11px] pt-1 border-t border-white/[0.04] font-sans">
-                    <span className="text-[#85858b] font-mono">Explanation: </span>
+                  <div className="text-[#a1a1a6] text-[11px] pt-1.5 border-t border-white/[0.06] font-sans">
+                    <span className="text-[#85858b] font-mono">Explanation </span>
                     {example.explanation}
                   </div>
                 )}
@@ -173,13 +167,13 @@ export function DsaProblemTab({
 
         {/* Constraints */}
         <section className="space-y-2">
-          <h2 className="text-xs font-semibold uppercase tracking-wider text-[#85858b]">
+          <h2 className="text-xs font-medium text-[#85858b]">
             Constraints
           </h2>
-          <ul className="space-y-1 font-mono text-[11px] text-[#a1a1a6] list-disc list-inside">
+          <ul className="space-y-1.5 font-mono text-[11px] text-[#a1a1a6] list-disc list-inside">
             {currentProblem.constraints.map((c, i) => (
               <li key={i} className="leading-5">
-                <code className="text-[#ededed] bg-[#1a1a1d] px-1 py-0.5 rounded">
+                <code className="text-[#ededed] bg-[#19191b] px-1.5 py-0.5 rounded-[4px] border border-white/[0.06]">
                   {c}
                 </code>
               </li>

@@ -1,5 +1,4 @@
 import { useState, useCallback, useEffect } from 'react';
-import { BookOpen } from 'lucide-react';
 import { DsaDashboard } from './components/dsa/DsaDashboard';
 import { DEFAULT_DSA_PROBLEMS } from './data/dsaScenarios';
 import type { ProjectFile } from './types/workspace';
@@ -13,13 +12,11 @@ import type {
 import type { SupportedLanguage } from '@debugLabs/shared';
 import { CodeEditor } from './components/editor/CodeEditor';
 import { EditorToolbar } from './components/editor/EditorToolbar';
-import { EditorTabs } from './components/editor/EditorTabs';
 import {
   OutputTerminal,
   type BottomPanelTab,
 } from './components/terminal/OutputTerminal';
 import { DsaProblemTab } from './components/dsa/DsaProblemTab';
-import { executeSingleFile } from './services/executionService';
 import {
   fetchDsaProblems,
   fetchDsaProblem,
@@ -56,16 +53,10 @@ export default function App() {
     },
   ]);
 
-  const [openTabIds, setOpenTabIds] = useState<string[]>(['dsa-solution']);
-
-  const [activeFileId, setActiveFileId] =
-    useState<string>('dsa-solution');
-
   const [bottomTab, setBottomTab] =
     useState<BottomPanelTab>('testcases');
 
   const [logs, setLogs] = useState<string[]>([]);
-  const [isRunning, setIsRunning] = useState<boolean>(false);
   const [failureCount, setFailureCount] = useState<number>(0);
 
   const [problems, setProblems] = useState<DsaProblemSummary[]>([]);
@@ -94,7 +85,6 @@ export default function App() {
         if (!isMounted) return;
         if (list && list.length > 0) {
           setProblems(list);
-          // Load the initial problem from backend if available
           const firstProblem = await fetchDsaProblem(list[0].id);
           if (isMounted && firstProblem) {
             setCurrentProblem(firstProblem);
@@ -123,42 +113,16 @@ export default function App() {
     };
   }, [selectedLanguage]);
 
-  const activeFile =
-    files.find((file) => file.id === activeFileId) || null;
-
-  const openFiles = openTabIds
-    .map((id) => files.find((file) => file.id === id))
-    .filter((file): file is ProjectFile => Boolean(file));
-
-  const handleSelectFile = (id: string) => {
-    if (!openTabIds.includes(id)) {
-      setOpenTabIds((previous) => [...previous, id]);
-    }
-
-    setActiveFileId(id);
-  };
-
-  const handleCloseTab = (id: string) => {
-    if (openTabIds.length <= 1) return;
-    const updated = openTabIds.filter((tabId) => tabId !== id);
-
-    setOpenTabIds(updated);
-
-    if (activeFileId === id) {
-      setActiveFileId(
-        updated.length > 0 ? updated[updated.length - 1] : 'dsa-solution'
-      );
-    }
-  };
+  const activeFile = files[0];
 
   const handleCodeChange = (newValue: string | undefined) => {
-    if (newValue === undefined || !activeFile) {
+    if (newValue === undefined) {
       return;
     }
 
     setFiles((previous) =>
       previous.map((file) =>
-        file.id === activeFile.id
+        file.id === 'dsa-solution'
           ? { ...file, content: newValue }
           : file
       )
@@ -179,8 +143,6 @@ export default function App() {
     setDsaRunSummary(null);
     setDsaSubmissionResult(null);
     setFailureCount(0);
-    setActiveFileId('dsa-solution');
-    setOpenTabIds(['dsa-solution']);
 
     setLogs((previous) => [
       ...previous,
@@ -248,7 +210,7 @@ export default function App() {
   const handleAddTestCase = () => {
     const newCase: DsaTestCase = {
       id: `custom-tc-${Date.now()}`,
-      name: `Custom ${testCases.length + 1}`,
+      name: `Case ${testCases.length + 1}`,
       input: '',
       expectedOutput: '',
       isCustom: true,
@@ -264,8 +226,7 @@ export default function App() {
   };
 
   const handleRunTestCases = useCallback(async () => {
-    const solutionFile =
-      files.find((file) => file.id === 'dsa-solution') || activeFile;
+    const solutionFile = files[0];
 
     if (!solutionFile) {
       return;
@@ -320,7 +281,6 @@ export default function App() {
       setIsDsaRunning(false);
     }
   }, [
-    activeFile,
     currentProblem.id,
     currentProblem.title,
     files,
@@ -329,8 +289,7 @@ export default function App() {
   ]);
 
   const handleSubmitSolution = useCallback(async () => {
-    const solutionFile =
-      files.find((file) => file.id === 'dsa-solution') || activeFile;
+    const solutionFile = files[0];
 
     if (!solutionFile) {
       return;
@@ -381,91 +340,11 @@ export default function App() {
       setIsSubmitting(false);
     }
   }, [
-    activeFile,
     currentProblem.id,
     currentProblem.title,
     files,
     selectedLanguage,
   ]);
-
-  const handleRunFile = async () => {
-    const targetFile = activeFile || files[0];
-
-    if (!targetFile) {
-      return;
-    }
-
-    if (
-      targetFile.language === 'markdown' ||
-      targetFile.name.endsWith('.md')
-    ) {
-      setBottomTab('output');
-
-      setLogs((previous) => [
-        ...previous,
-        '',
-        `\x1b[33m[notice]\x1b[0m ${targetFile.name} is documentation and cannot be executed directly`,
-      ]);
-
-      return;
-    }
-
-    setIsRunning(true);
-    setBottomTab('output');
-
-    setLogs((previous) => [
-      ...previous,
-      '',
-      `\x1b[90m$ run ${targetFile.name} (${targetFile.language})\x1b[0m`,
-    ]);
-
-    try {
-      const result = await executeSingleFile(targetFile);
-
-      if (result.stdout) {
-        setLogs((previous) => [
-          ...previous,
-          result.stdout.trimEnd(),
-        ]);
-      }
-
-      if (result.stderr) {
-        setLogs((previous) => [
-          ...previous,
-          `\x1b[31m${result.stderr.trimEnd()}\x1b[0m`,
-        ]);
-      }
-
-      if (result.success) {
-        setFailureCount(0);
-
-        setLogs((previous) => [
-          ...previous,
-          `\x1b[32mProcess completed in ${result.executionTimeMs}ms\x1b[0m \x1b[90m(exit code: 0, memory: ${result.memoryMb.toFixed(1)}MB)\x1b[0m`,
-        ]);
-      } else {
-        setFailureCount((count) => count + 1);
-
-        setLogs((previous) => [
-          ...previous,
-          `\x1b[31mProcess exited with code ${result.exitCode}\x1b[0m \x1b[90m(${result.executionTimeMs}ms, memory: ${result.memoryMb.toFixed(1)}MB)\x1b[0m`,
-        ]);
-      }
-    } catch (error) {
-      const message =
-        error instanceof Error ? error.message : 'Execution failed';
-
-      setFailureCount((count) => count + 1);
-
-      setLogs((previous) => [
-        ...previous,
-        `\x1b[31m${message}\x1b[0m`,
-        '\x1b[31mProcess terminated with code 1\x1b[0m',
-      ]);
-    } finally {
-      setIsRunning(false);
-    }
-  };
 
   if (showDashboard) {
     return (
@@ -474,9 +353,7 @@ export default function App() {
         isLoading={isLoadingProblems}
         onOpenProblem={(problem) => {
           if (problem.id !== currentProblem.id) {
-            const solution = files.find(
-              (file) => file.id === 'dsa-solution'
-            );
+            const solution = files[0];
 
             const hasEdits =
               solution &&
@@ -495,7 +372,6 @@ export default function App() {
             handleSelectProblem(problem.id);
           }
 
-          handleSelectFile('dsa-solution');
           setShowDashboard(false);
         }}
       />
@@ -504,31 +380,13 @@ export default function App() {
 
   return (
     <div className="flex flex-col h-screen w-screen bg-[#0f0f10] text-[#ededed] overflow-hidden">
-      <nav
-        aria-label="Workspace navigation"
-        className="flex shrink-0 items-center gap-4 border-b border-white/10 px-4 py-2"
-      >
-        <button
-          type="button"
-          onClick={() => setShowDashboard(true)}
-          disabled={isRunning || isDsaRunning}
-          className="rounded px-2 py-1 text-xs text-lime-200 hover:bg-white/5 focus-visible:outline-2 focus-visible:outline-lime-200 disabled:opacity-40"
-        >
-          ← Questions
-        </button>
-
-        <span className="text-xs text-zinc-400">
-          {currentProblem.title}
-        </span>
-      </nav>
-
       <EditorToolbar
-        activeFile={activeFile || files[0]}
-        isRunning={isRunning}
-        onRunFile={handleRunFile}
-        onReset={handleReset}
+        onBack={() => setShowDashboard(true)}
+        problemTitle={currentProblem.title}
+        difficulty={currentProblem.difficulty}
         selectedLanguage={selectedLanguage}
         onSelectLanguage={handleSelectLanguage}
+        onReset={handleReset}
         onRunTestCases={handleRunTestCases}
         isDsaRunning={isDsaRunning}
         onSubmitSolution={handleSubmitSolution}
@@ -536,48 +394,24 @@ export default function App() {
       />
 
       <div className="flex flex-1 overflow-hidden">
-        <aside className="w-80 bg-[#0f0f10] border-r border-white/[0.08] flex flex-col select-none shrink-0 overflow-hidden">
-          <div className="h-9 bg-[#0f0f10] border-b border-white/[0.08] flex items-center px-3.5 shrink-0">
-            <div className="flex items-center gap-2 text-xs font-medium text-[#ededed]">
-              <BookOpen className="w-3.5 h-3.5 stroke-[1.5] text-emerald-400" />
-              <span>DSA Problem</span>
-            </div>
-          </div>
-
-          <div className="flex-1 overflow-hidden">
-            <DsaProblemTab
-              currentProblem={currentProblem}
-              problems={problems}
-              onSelectProblem={handleSelectProblem}
-            />
-          </div>
+        <aside className="w-80 md:w-96 bg-[#0f0f10] border-r border-white/[0.08] flex flex-col select-none shrink-0 overflow-hidden">
+          <DsaProblemTab
+            currentProblem={currentProblem}
+            problems={problems}
+            onSelectProblem={handleSelectProblem}
+          />
         </aside>
 
         <div className="flex-1 flex flex-col bg-[#141415] overflow-hidden">
           <main className="flex-1 flex flex-col overflow-hidden">
-            <EditorTabs
-              openFiles={openFiles}
-              activeFileId={activeFileId}
-              onSelectTab={setActiveFileId}
-              onCloseTab={handleCloseTab}
+            <CodeEditor
+              file={activeFile}
+              onChange={handleCodeChange}
             />
-
-            {activeFile ? (
-              <CodeEditor
-                file={activeFile}
-                onChange={handleCodeChange}
-              />
-            ) : (
-              <div className="flex-1 flex items-center justify-center text-xs font-mono text-[#85858b]">
-                Select a file from the explorer or problem tab to
-                begin editing
-              </div>
-            )}
           </main>
 
           <OutputTerminal
             logs={logs}
-            isRunning={isRunning}
             failureCount={failureCount}
             activeTab={bottomTab}
             onTabChange={setBottomTab}
@@ -589,7 +423,6 @@ export default function App() {
             onUpdateTestCase={handleUpdateTestCase}
             onAddTestCase={handleAddTestCase}
             onRemoveTestCase={handleRemoveTestCase}
-            onRunTestCases={handleRunTestCases}
             dsaRunSummary={dsaRunSummary}
             isDsaRunning={isDsaRunning}
             dsaSubmissionResult={dsaSubmissionResult}
