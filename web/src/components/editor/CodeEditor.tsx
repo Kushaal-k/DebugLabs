@@ -2,6 +2,7 @@ import { useRef, useCallback } from 'react';
 import Editor, { loader, type BeforeMount, type OnMount } from '@monaco-editor/react';
 import * as monaco from 'monaco-editor';
 import type { ProjectFile } from '../../types/workspace';
+import { useTheme } from '../common/themeContext';
 
 loader.config({ monaco });
 
@@ -65,6 +66,7 @@ function getMonacoLanguage(lang?: string, fileName?: string): string {
 }
 
 export function CodeEditor({ file, onChange }: Props) {
+  const { theme } = useTheme();
   const language = getMonacoLanguage(file.language, file.name);
   const editorRef = useRef<monaco.editor.IStandaloneCodeEditor | null>(null);
 
@@ -116,10 +118,10 @@ export function CodeEditor({ file, onChange }: Props) {
 
   return (
     <div className="relative flex h-full flex-1 flex-col overflow-hidden bg-transparent">
-      <div className="flex h-9 shrink-0 items-center justify-between border-b border-white/[0.06] px-4 select-none">
+      <div className="flex h-9 shrink-0 items-center justify-between border-b border-lab-line/[0.06] px-4 select-none">
         <div className="flex items-center gap-2">
           <span className="h-1.5 w-1.5 rounded-full bg-emerald-400/80" />
-          <span className="font-mono text-[12px] text-[#c8c8ce]">{file.name}</span>
+          <span className="font-mono text-[12px] text-lab-detail">{file.name}</span>
         </div>
       </div>
 
@@ -129,7 +131,7 @@ export function CodeEditor({ file, onChange }: Props) {
           height="100%"
           language={language}
           value={hasDriver ? userCode : file.content}
-          theme="debuglabs-graphite"
+          theme={theme === 'light' ? 'vs' : 'debuglabs-graphite'}
           beforeMount={handleEditorWillMount}
           onMount={handleEditorDidMount}
           onChange={handleCodeChange}
@@ -155,7 +157,7 @@ export function CodeEditor({ file, onChange }: Props) {
             cursorBlinking: 'smooth',
           }}
           loading={
-            <div className="flex h-full items-center justify-center text-xs font-mono text-[#85858b]">
+            <div className="flex h-full items-center justify-center text-xs font-mono text-lab-muted">
               Loading editor…
             </div>
           }

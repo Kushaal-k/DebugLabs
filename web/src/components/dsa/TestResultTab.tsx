@@ -17,8 +17,8 @@ export function TestResultTab({
 
   if (isRunning) {
     return (
-      <div className="flex h-full flex-1 flex-col items-center justify-center space-y-2 text-xs text-[#85858b]">
-        <div className="w-4 h-4 border-2 border-white/[0.2] border-t-white rounded-full animate-spin" />
+      <div className="flex h-full flex-1 flex-col items-center justify-center space-y-2 text-xs text-lab-muted">
+        <div className="w-4 h-4 border-2 border-lab-line/[0.2] border-t-lab-line rounded-full animate-spin" />
         <span>Evaluating code against test cases…</span>
       </div>
     );
@@ -31,8 +31,8 @@ export function TestResultTab({
 
   if (!submissionResult && !runSummary) {
     return (
-      <div className="flex h-full flex-1 flex-col items-center justify-center space-y-1 p-4 text-center text-xs text-[#85858b]">
-        <span className="text-[#ededed] font-medium">No test results yet</span>
+      <div className="flex h-full flex-1 flex-col items-center justify-center space-y-1 p-4 text-center text-xs text-lab-muted">
+        <span className="text-lab-ink font-medium">No test results yet</span>
         <span>Run test cases to evaluate your solution</span>
       </div>
     );
@@ -53,27 +53,27 @@ export function TestResultTab({
   const activeResult = results[selectedCaseIndex] || results[0];
 
   return (
-    <div className="flex h-full flex-1 select-text flex-col overflow-hidden text-[#ededed]">
-      <div className="flex h-10 shrink-0 items-center justify-between border-b border-white/[0.08] px-4">
+    <div className="flex h-full flex-1 select-text flex-col overflow-hidden text-lab-ink">
+      <div className="flex h-10 shrink-0 items-center justify-between border-b border-lab-line/[0.08] px-4">
         <div className="flex items-center gap-3">
           {isAccepted ? (
-            <div className="flex items-center gap-1.5 text-[#4cc38a] font-medium text-xs">
+            <div className="flex items-center gap-1.5 text-lab-success font-medium text-xs">
               <CheckCircle2 className="w-4 h-4 stroke-[1.5]" />
               <span>{isSubmission ? 'Submission accepted' : 'Passed'}</span>
             </div>
           ) : (
-            <div className="flex items-center gap-1.5 text-[#c98b92] font-medium text-xs">
+            <div className="flex items-center gap-1.5 text-lab-failure font-medium text-xs">
               <XCircle className="w-4 h-4 stroke-[1.5]" />
               <span>{verdict}</span>
             </div>
           )}
 
-          <span className="text-xs font-mono text-[#a1a1a6] tabular-nums">
+          <span className="text-xs font-mono text-lab-secondary tabular-nums">
             {passedCount}/{totalCount} test cases passed
           </span>
         </div>
 
-        <div className="flex items-center gap-1.5 text-[11px] font-mono text-[#85858b] tabular-nums">
+        <div className="flex items-center gap-1.5 text-[11px] font-mono text-lab-muted tabular-nums">
           <Clock className="w-3.5 h-3.5 stroke-[1.5]" />
           <span>{executionTimeMs} ms</span>
         </div>
@@ -81,7 +81,7 @@ export function TestResultTab({
 
       {/* Case Selector Pills */}
       {results.length > 0 && (
-        <div className="custom-scrollbar flex h-9 shrink-0 items-center gap-1.5 overflow-x-auto border-b border-white/[0.06] px-4">
+        <div className="custom-scrollbar flex h-9 shrink-0 items-center gap-1.5 overflow-x-auto border-b border-lab-line/[0.06] px-4">
           {results.map((res, idx) => {
             const isSelected = idx === selectedCaseIndex;
             return (
@@ -91,13 +91,13 @@ export function TestResultTab({
                 onClick={() => setSelectedCaseIndex(idx)}
                 className={`flex h-6 cursor-pointer items-center gap-1.5 rounded-full px-2.5 text-xs transition-colors ${
                   isSelected
-                    ? 'border border-white/[0.12] bg-white/[0.1] font-medium text-[#ededed]'
-                    : 'text-[#85858b] hover:bg-white/[0.05] hover:text-[#ededed]'
+                    ? 'border border-lab-line/[0.12] bg-lab-line/[0.1] font-medium text-lab-ink'
+                    : 'text-lab-muted hover:bg-lab-line/[0.05] hover:text-lab-ink'
                 }`}
               >
                 <span
                   className={`h-1.5 w-1.5 rounded-full ${
-                    res.passed ? 'bg-[#4cc38a]' : 'bg-white/30'
+                    res.passed ? 'bg-lab-success' : 'bg-lab-line/30'
                   }`}
                 />
                 <span>{res.testCaseName || (res.hidden ? `Hidden ${idx + 1}` : `Case ${idx + 1}`)}</span>
@@ -111,26 +111,26 @@ export function TestResultTab({
       {activeResult && (
         <div className="flex-1 p-3.5 overflow-y-auto space-y-2.5 font-mono text-xs">
           {activeResult.errorMessage && (
-            <div className="flex items-start gap-2 rounded-xl border border-white/[0.08] bg-white/[0.03] p-2.5 text-xs text-[#c8c8ce]">
+            <div className="flex items-start gap-2 rounded-xl border border-lab-line/[0.08] bg-lab-line/[0.03] p-2.5 text-xs text-lab-detail">
               <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 stroke-[1.5]" />
               <div className="whitespace-pre-wrap">{activeResult.errorMessage}</div>
             </div>
           )}
 
           <div className="space-y-1">
-            <div className="font-sans text-[11px] font-medium text-[#85858b]">
+            <div className="font-sans text-[11px] font-medium text-lab-muted">
               Your output
             </div>
-            <div className="rounded-lg border border-white/[0.08] bg-black/40 px-3 py-1.5 font-mono text-xs text-[#ededed]">
+            <div className="rounded-lg border border-lab-line/[0.08] bg-lab-recess/40 px-3 py-1.5 font-mono text-xs text-lab-ink">
               {activeResult.actualOutput || (activeResult.passed ? '(Empty output)' : '(No output)')}
             </div>
           </div>
 
           <div className="space-y-1">
-            <div className="font-sans text-[11px] font-medium text-[#85858b]">
+            <div className="font-sans text-[11px] font-medium text-lab-muted">
               Expected output
             </div>
-            <div className="rounded-lg border border-white/[0.08] bg-black/40 px-3 py-1.5 font-mono text-xs text-[#ededed]">
+            <div className="rounded-lg border border-lab-line/[0.08] bg-lab-recess/40 px-3 py-1.5 font-mono text-xs text-lab-ink">
               {activeResult.hidden && !activeResult.passed
                 ? '[Hidden test case output]'
                 : activeResult.expectedOutput}
