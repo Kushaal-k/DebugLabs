@@ -45,16 +45,16 @@ export function LanguageSelector({
         type="button"
         disabled={disabled}
         onClick={() => setIsOpen((prev) => !prev)}
-        className="glass-inset flex h-8 cursor-pointer select-none items-center gap-2 rounded-full px-3 text-xs font-normal text-[#ededed] transition-colors hover:bg-white/[0.08] disabled:opacity-40"
+        className="glass-inset flex h-8 cursor-pointer select-none items-center gap-2 rounded-full px-3 text-xs font-normal text-lab-ink transition-colors hover:bg-lab-line/[0.08] disabled:opacity-40"
         title="Select programming language"
       >
-        <Code2 className="w-3.5 h-3.5 text-[#85858b] stroke-[1.5]" />
+        <Code2 className="w-3.5 h-3.5 text-lab-muted stroke-[1.5]" />
         <span className="font-mono text-[12px]">{currentOption.name}</span>
-        <span className="text-[11px] text-[#85858b] hidden sm:inline tabular-nums">
+        <span className="text-[11px] text-lab-muted hidden sm:inline tabular-nums">
           {currentOption.version}
         </span>
         <ChevronDown
-          className={`w-3.5 h-3.5 text-[#85858b] stroke-[1.5] transition-transform duration-150 ${
+          className={`w-3.5 h-3.5 text-lab-muted stroke-[1.5] transition-transform duration-150 ${
             isOpen ? 'rotate-180' : ''
           }`}
         />
@@ -62,7 +62,7 @@ export function LanguageSelector({
 
       {isOpen && (
         <div className="glass-dropdown absolute right-0 z-50 mt-2 w-48 rounded-2xl py-1.5">
-          <div className="mb-1 border-b border-white/[0.08] px-3 py-1 text-[11px] font-medium tracking-wide text-[#85858b]">
+          <div className="mb-1 border-b border-lab-line/[0.08] px-3 py-1 text-[11px] font-medium tracking-wide text-lab-muted">
             Language
           </div>
           <div className="space-y-0.5 p-1">
@@ -75,18 +75,18 @@ export function LanguageSelector({
                   onClick={() => handleSelect(option)}
                   className={`flex w-full cursor-pointer items-center justify-between rounded-xl px-2.5 py-1.5 text-left text-xs transition-colors ${
                     isSelected
-                      ? 'bg-white/[0.12] font-medium text-[#ededed]'
-                      : 'text-[#a1a1a6] hover:bg-white/[0.08] hover:text-[#ededed]'
+                      ? 'bg-lab-line/[0.12] font-medium text-lab-ink'
+                      : 'text-lab-secondary hover:bg-lab-line/[0.08] hover:text-lab-ink'
                   }`}
                 >
                   <div className="flex items-center gap-2">
                     <span className="font-mono text-[12px]">{option.name}</span>
-                    <span className="text-[10px] text-[#85858b] tabular-nums">
+                    <span className="text-[10px] text-lab-muted tabular-nums">
                       {option.version}
                     </span>
                   </div>
                   {isSelected && (
-                    <Check className="w-3.5 h-3.5 text-emerald-400 stroke-[1.5]" />
+                    <Check className="w-3.5 h-3.5 text-lab-positive stroke-[1.5]" />
                   )}
                 </button>
               );

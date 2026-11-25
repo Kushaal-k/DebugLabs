@@ -1,5 +1,6 @@
 import { RotateCcw, Loader2, Play, CheckCircle2, ArrowLeft } from 'lucide-react';
 import type { SupportedLanguage } from '@debugLabs/shared';
+import { ThemeToggle } from '../common/theme';
 import { LanguageSelector } from '../dsa/LanguageSelector';
 
 interface Props {
@@ -30,9 +31,9 @@ export function EditorToolbar({
   const isBusy = isDsaRunning || isSubmitting;
 
   const difficultyClasses = {
-    Easy: 'bg-emerald-500/10 text-[#4cc38a] border-emerald-500/20',
-    Medium: 'bg-amber-500/10 text-amber-400 border-amber-500/20',
-    Hard: 'bg-rose-500/10 text-rose-400 border-rose-500/20',
+    Easy: 'bg-emerald-500/10 text-lab-success border-emerald-500/20',
+    Medium: 'bg-amber-500/10 text-lab-warning border-amber-500/20',
+    Hard: 'bg-rose-500/10 text-lab-danger border-rose-500/20',
   };
 
   return (
@@ -42,17 +43,17 @@ export function EditorToolbar({
           type="button"
           onClick={onBack}
           disabled={isBusy}
-          className="flex h-8 cursor-pointer items-center gap-1.5 rounded-full px-2.5 text-xs text-[#a1a1a6] transition-colors hover:bg-white/[0.08] hover:text-[#ededed] disabled:opacity-40"
+          className="flex h-8 cursor-pointer items-center gap-1.5 rounded-full px-2.5 text-xs text-lab-secondary transition-colors hover:bg-lab-line/[0.08] hover:text-lab-ink disabled:opacity-40"
           title="Return to questions list"
         >
           <ArrowLeft className="h-3.5 w-3.5 stroke-[1.75]" />
           <span>Labs</span>
         </button>
 
-        <div className="h-4 w-px bg-white/10" />
+        <div className="h-4 w-px bg-lab-line/10" />
 
         <div className="flex min-w-0 items-center gap-2">
-          <span className="truncate text-[13px] font-medium tracking-tight text-[#ededed]">
+          <span className="truncate text-[13px] font-medium tracking-tight text-lab-ink">
             {problemTitle}
           </span>
           {difficulty && (
@@ -68,6 +69,7 @@ export function EditorToolbar({
       </div>
 
       <div className="flex items-center gap-1.5">
+        <ThemeToggle />
         <LanguageSelector
           selectedLanguage={selectedLanguage}
           onSelectLanguage={onSelectLanguage}
@@ -78,7 +80,7 @@ export function EditorToolbar({
           type="button"
           onClick={onReset}
           disabled={isBusy}
-          className="flex h-8 cursor-pointer items-center gap-1.5 rounded-full px-2.5 text-xs text-[#85858b] transition-colors hover:bg-white/[0.08] hover:text-[#ededed] disabled:opacity-40"
+          className="flex h-8 cursor-pointer items-center gap-1.5 rounded-full px-2.5 text-xs text-lab-muted transition-colors hover:bg-lab-line/[0.08] hover:text-lab-ink disabled:opacity-40"
           title="Reset code to starter template"
         >
           <RotateCcw className="h-3.5 w-3.5 stroke-[1.75]" />
@@ -89,13 +91,13 @@ export function EditorToolbar({
           type="button"
           onClick={onRunTestCases}
           disabled={isBusy}
-          className="glass-inset flex h-8 cursor-pointer items-center gap-1.5 rounded-full px-3.5 text-xs font-medium text-[#ededed] transition-colors hover:bg-white/[0.08] disabled:opacity-40"
+          className="glass-inset flex h-8 cursor-pointer items-center gap-1.5 rounded-full px-3.5 text-xs font-medium text-lab-ink transition-colors hover:bg-lab-line/[0.08] disabled:opacity-40"
           title="Run sample test cases"
         >
           {isDsaRunning ? (
-            <Loader2 className="h-3.5 w-3.5 animate-spin stroke-[1.75] text-[#a1a1a6]" />
+            <Loader2 className="h-3.5 w-3.5 animate-spin stroke-[1.75] text-lab-secondary" />
           ) : (
-            <Play className="h-3.5 w-3.5 fill-current stroke-[1.75] text-[#c8c8ce]" />
+            <Play className="h-3.5 w-3.5 fill-current stroke-[1.75] text-lab-detail" />
           )}
           <span>{isDsaRunning ? 'Testing…' : 'Run'}</span>
         </button>
