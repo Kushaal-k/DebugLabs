@@ -96,6 +96,28 @@ export function CodeEditor({ file, onChange }: Props) {
         'editorCursor.foreground': '#6ee7b7',
       },
     });
+
+    monacoInstance.editor.defineTheme('debuglabs-alabaster', {
+      base: 'vs',
+      inherit: true,
+      rules: [
+        { token: 'comment', foreground: '6c7386', fontStyle: 'italic' },
+        { token: 'keyword', foreground: 'c23a4b' },
+        { token: 'string', foreground: '2563eb' },
+        { token: 'number', foreground: '0d9488' },
+        { token: 'type', foreground: '7c3aed' },
+      ],
+      colors: {
+        'editor.background': '#f8f9fce6',
+        'editor.foreground': '#181b25',
+        'editor.lineHighlightBackground': '#181b2508',
+        'editorLineNumber.foreground': '#9aa1b2',
+        'editorLineNumber.activeForeground': '#181b25',
+        'editorGutter.background': '#f8f9fce6',
+        'editor.selectionBackground': '#6366f120',
+        'editorCursor.foreground': '#08704a',
+      },
+    });
   };
 
   const handleEditorDidMount: OnMount = (editor) => {
@@ -131,7 +153,7 @@ export function CodeEditor({ file, onChange }: Props) {
           height="100%"
           language={language}
           value={hasDriver ? userCode : file.content}
-          theme={theme === 'light' ? 'vs' : 'debuglabs-graphite'}
+          theme={theme === 'light' ? 'debuglabs-alabaster' : 'debuglabs-graphite'}
           beforeMount={handleEditorWillMount}
           onMount={handleEditorDidMount}
           onChange={handleCodeChange}
