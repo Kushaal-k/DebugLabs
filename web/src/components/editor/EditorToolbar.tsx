@@ -37,13 +37,13 @@ export function EditorToolbar({
   };
 
   return (
-    <header className="glass relative z-30 flex h-12 shrink-0 items-center justify-between rounded-full px-4 select-none">
+    <header className="glass relative z-30 flex h-12 shrink-0 items-center justify-between rounded-full px-2 select-none">
       <div className="flex min-w-0 items-center gap-2.5">
         <button
           type="button"
           onClick={onBack}
           disabled={isBusy}
-          className="flex h-8 cursor-pointer items-center gap-1.5 rounded-full px-2.5 text-xs text-lab-secondary transition-colors hover:bg-lab-line/[0.08] hover:text-lab-ink disabled:opacity-40"
+          className="flex h-8 cursor-pointer items-center gap-1.5 rounded-full px-3 text-xs text-lab-secondary transition-colors hover:bg-lab-line/[0.08] hover:text-lab-ink disabled:opacity-40"
           title="Return to questions list"
         >
           <ArrowLeft className="h-3.5 w-3.5 stroke-[1.75]" />

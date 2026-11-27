@@ -1,7 +1,9 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   ArrowRight,
   Bug,
+  Check,
+  ChevronDown,
   Search,
   SlidersHorizontal,
   X,
@@ -23,6 +25,92 @@ const difficultyStyles: Record<DsaDifficulty, string> = {
   Medium: 'text-lab-warning',
   Hard: 'text-lab-danger',
 };
+
+interface FilterOption {
+  value: string;
+  label: string;
+}
+
+function FilterSelect({
+  label,
+  value,
+  options,
+  onChange,
+}: {
+  label: string;
+  value: string;
+  options: FilterOption[];
+  onChange: (value: string) => void;
+}) {
+  const [isOpen, setIsOpen] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const currentLabel = options.find((o) => o.value === value)?.label ?? value;
+
+  return (
+    <div className="flex flex-col gap-2 text-xs text-lab-secondary" ref={containerRef}>
+      <span>{label}</span>
+      <div className="relative">
+        <button
+          type="button"
+          onClick={() => setIsOpen((prev) => !prev)}
+          aria-expanded={isOpen}
+          className="glass-inset flex h-10 w-full cursor-pointer items-center justify-between rounded-xl px-3 text-sm text-lab-ink transition-colors hover:bg-lab-line/[0.08] focus-visible:outline-2 focus-visible:outline-lab-positive"
+        >
+          <span className="truncate">{currentLabel}</span>
+          <ChevronDown
+            className={`h-4 w-4 shrink-0 text-lab-muted stroke-[1.5] transition-transform duration-150 ${
+              isOpen ? 'rotate-180' : ''
+            }`}
+          />
+        </button>
+
+        {isOpen && (
+          <div className="glass-dropdown custom-scrollbar absolute left-0 right-0 z-50 mt-2 max-h-60 overflow-y-auto rounded-2xl py-1.5">
+            <div className="mb-1 border-b border-lab-line/[0.08] px-3 py-1 text-[11px] font-medium tracking-wide text-lab-muted">
+              {label}
+            </div>
+            <div className="space-y-0.5 p-1">
+              {options.map((option) => {
+                const isSelected = option.value === value;
+                return (
+                  <button
+                    key={option.value}
+                    type="button"
+                    onClick={() => {
+                      onChange(option.value);
+                      setIsOpen(false);
+                    }}
+                    className={`flex w-full cursor-pointer items-center justify-between rounded-xl px-2.5 py-1.5 text-left text-xs transition-colors ${
+                      isSelected
+                        ? 'bg-lab-line/[0.12] font-medium text-lab-ink'
+                        : 'text-lab-secondary hover:bg-lab-line/[0.08] hover:text-lab-ink'
+                    }`}
+                  >
+                    <span className="truncate">{option.label}</span>
+                    {isSelected && (
+                      <Check className="h-3.5 w-3.5 shrink-0 text-lab-positive stroke-[1.5]" />
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
 
 export function DsaDashboard({
   problems = DEFAULT_DSA_PROBLEMS,
@@ -111,7 +199,7 @@ export function DsaDashboard({
 
               <Search
                 aria-hidden="true"
-                className="pointer-events-none absolute left-4 top-3.5 h-4 w-4 text-lab-muted"
+                className="pointer-events-none absolute left-4 top-3.5 z-10 h-4 w-4 text-lab-muted"
               />
 
               <input
@@ -146,36 +234,28 @@ export function DsaDashboard({
           </div>
 
           <div id="dsa-lab-filters" hidden={!showFilters}>
-            <div className="glass mt-3 grid gap-3 rounded-2xl p-4 sm:grid-cols-2">
-              <label className="flex flex-col gap-2 text-xs text-lab-secondary">
-                Difficulty
-                <select
-                  value={difficulty}
-                  onChange={(event) => setDifficulty(event.target.value)}
-                  className="glass-inset h-10 rounded-xl px-3 text-sm text-lab-ink outline-none focus-visible:ring-2 focus-visible:ring-lab-positive"
-                >
-                  <option value="All" className="bg-lab-menu text-lab-ink">All difficulties</option>
-                  <option value="Easy" className="bg-lab-menu text-lab-ink">Easy</option>
-                  <option value="Medium" className="bg-lab-menu text-lab-ink">Medium</option>
-                  <option value="Hard" className="bg-lab-menu text-lab-ink">Hard</option>
-                </select>
-              </label>
+            <div className="glass relative z-20 mt-3 grid gap-3 rounded-2xl p-4 sm:grid-cols-2">
+              <FilterSelect
+                label="Difficulty"
+                value={difficulty}
+                onChange={setDifficulty}
+                options={[
+                  { value: 'All', label: 'All difficulties' },
+                  { value: 'Easy', label: 'Easy' },
+                  { value: 'Medium', label: 'Medium' },
+                  { value: 'Hard', label: 'Hard' },
+                ]}
+              />
 
-              <label className="flex flex-col gap-2 text-xs text-lab-secondary">
-                Topic
-                <select
-                  value={topic}
-                  onChange={(event) => setTopic(event.target.value)}
-                  className="glass-inset h-10 rounded-xl px-3 text-sm text-lab-ink outline-none focus-visible:ring-2 focus-visible:ring-lab-positive"
-                >
-                  <option value="All" className="bg-lab-menu text-lab-ink">All topics</option>
-                  {topics.map((item) => (
-                    <option key={item} value={item} className="bg-lab-menu text-lab-ink">
-                      {item}
-                    </option>
-                  ))}
-                </select>
-              </label>
+              <FilterSelect
+                label="Topic"
+                value={topic}
+                onChange={setTopic}
+                options={[
+                  { value: 'All', label: 'All topics' },
+                  ...topics.map((item) => ({ value: item, label: item })),
+                ]}
+              />
             </div>
           </div>
 
