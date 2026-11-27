@@ -25,6 +25,8 @@ import {
   submitDsaSolution,
 } from './services/dsaService';
 
+const INITIAL_LANGUAGE: SupportedLanguage = 'javascript';
+
 const FILE_NAMES: Record<SupportedLanguage, string> = {
   javascript: 'solution.js',
   python: 'solution.py',
@@ -42,15 +44,15 @@ export default function App() {
   );
 
   const [selectedLanguage, setSelectedLanguage] =
-    useState<SupportedLanguage>('javascript');
+    useState<SupportedLanguage>(INITIAL_LANGUAGE);
 
   const [files, setFiles] = useState<ProjectFile[]>([
     {
       id: 'dsa-solution',
-      name: FILE_NAMES['javascript'],
+      name: FILE_NAMES[INITIAL_LANGUAGE],
       folder: 'root',
-      language: 'javascript',
-      content: DEFAULT_DSA_PROBLEMS[0].starterCode['javascript'] || '',
+      language: INITIAL_LANGUAGE,
+      content: DEFAULT_DSA_PROBLEMS[0].starterCode[INITIAL_LANGUAGE] || '',
     },
   ]);
 
@@ -141,11 +143,11 @@ export default function App() {
             setFiles([
               {
                 id: 'dsa-solution',
-                name: FILE_NAMES[selectedLanguage] || 'solution.js',
+                name: FILE_NAMES[INITIAL_LANGUAGE] || 'solution.js',
                 folder: 'root',
-                language: selectedLanguage,
+                language: INITIAL_LANGUAGE,
                 content:
-                  firstProblem.starterCode[selectedLanguage] || '',
+                  firstProblem.starterCode[INITIAL_LANGUAGE] || '',
               },
             ]);
           }
@@ -160,7 +162,7 @@ export default function App() {
     return () => {
       isMounted = false;
     };
-  }, [selectedLanguage]);
+  }, []);
 
   const activeFile = files[0];
 
