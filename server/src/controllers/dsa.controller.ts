@@ -1,29 +1,29 @@
 import type { Request, Response } from "express";
 import crypto from "node:crypto";
 import type {
+  BatchExecutionPayload,
+  BatchExecutionResult,
   DsaRunRequest,
   DsaRunSummary,
   DsaSubmissionResult,
   DsaTestCase,
-  DsaTestCaseResult,
   DsaVerifyRequest,
-  ExecutionPayload,
-  ExecutionResult,
   SupportedLanguage,
 } from "@debugLabs/shared";
 import {
   getDsaProblemSummaries,
   getDsaProblemForClient,
   getDsaProblemWithHidden,
-  buildDsaExecutionPayload,
   evaluateTestCase,
   summarizeRun,
 } from "../challenges/dsa/index.js";
 
 const EXEC_URL = process.env.EXECUTION_ENGINE_URL || "http://127.0.0.1:3002";
 
-async function executeViaEngine(payload: ExecutionPayload): Promise<ExecutionResult> {
-  const res = await fetch(`${EXEC_URL}/execute`, {
+async function executeBatchViaEngine(
+  payload: BatchExecutionPayload
+): Promise<BatchExecutionResult> {
+  const res = await fetch(`${EXEC_URL}/execute-batch`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload),
@@ -34,31 +34,44 @@ async function executeViaEngine(payload: ExecutionPayload): Promise<ExecutionRes
     throw new Error(`Engine error (${res.status}): ${text}`);
   }
 
-  return (await res.json()) as ExecutionResult;
+  return (await res.json()) as BatchExecutionResult;
 }
 
 async function runCases(
   language: SupportedLanguage,
   code: string,
-  cases: DsaTestCase[]
+  cases: DsaTestCase[],
+  limits?: { timeLimitMs?: number; memoryLimitMb?: number }
 ): Promise<DsaRunSummary> {
-  const results: DsaTestCaseResult[] = [];
-  let totalTime = 0;
+  const batch = await executeBatchViaEngine({
+    language,
+    code,
+    cases: cases.map((tc) => ({
+      id: tc.id,
+      stdin: tc.input,
+      timeLimitMs: limits?.timeLimitMs,
+    })),
+  });
 
-  for (const tc of cases) {
-    const payload = buildDsaExecutionPayload(language, code, tc.input);
-    const out = await executeViaEngine(payload);
-    totalTime += out.executionTime || 0;
-    const tcResult = evaluateTestCase(
-      out.stdout,
-      out.error,
-      out.exitCode,
-      out.executionTime,
-      tc
-    );
-    results.push(tcResult);
-  }
+  const byId = new Map(batch.results.map((r) => [r.id, r]));
+  const results = cases.map((tc) => {
+    const out = byId.get(tc.id) ?? {
+      id: tc.id,
+      status: "Failed" as const,
+      stdout: "",
+      error: batch.compileError || "Missing execution result",
+      executionTime: 0,
+      memoryUsed: 0,
+      exitCode: 1,
+    };
+    return evaluateTestCase(out.stdout, out.error, out.exitCode, out.executionTime, tc, {
+      memoryUsedBytes: out.memoryUsed,
+      timeLimitMs: limits?.timeLimitMs,
+      memoryLimitMb: limits?.memoryLimitMb,
+    });
+  });
 
+  const totalTime = results.reduce((sum, r) => sum + (r.executionTimeMs || 0), 0);
   return summarizeRun(results, totalTime);
 }
 
@@ -95,7 +108,10 @@ export const runProblem = async (
     if (!problem) return res.status(404).json({ error: "Problem not found" });
 
     const cases = customTestCases?.length ? customTestCases : problem.testCases;
-    const summary = await runCases(language, code, cases);
+    const summary = await runCases(language, code, cases, {
+      timeLimitMs: problem.timeLimitMs,
+      memoryLimitMb: problem.memoryLimitMb,
+    });
     res.json(summary);
   } catch (err: any) {
     res.status(500).json({ error: err.message || "Failed to run test cases" });
@@ -115,7 +131,10 @@ export const submitProblem = async (
     if (!problem) return res.status(404).json({ error: "Problem not found" });
 
     const allCases = [...problem.testCases, ...(problem.hiddenTestCases || [])];
-    const summary = await runCases(language, code, allCases);
+    const summary = await runCases(language, code, allCases, {
+      timeLimitMs: problem.timeLimitMs,
+      memoryLimitMb: problem.memoryLimitMb,
+    });
 
     const result: DsaSubmissionResult = {
       submissionId: crypto.randomUUID(),
@@ -124,6 +143,7 @@ export const submitProblem = async (
       passedCount: summary.passed,
       totalCount: summary.total,
       executionTimeMs: summary.executionTimeMs,
+      memoryUsedKb: summary.memoryUsedKb,
       details: summary.results,
     };
 

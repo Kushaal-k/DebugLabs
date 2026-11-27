@@ -45,6 +45,31 @@ export interface ExecutionResult {
   exitCode: number | null;
 }
 
+export interface BatchExecutionCase {
+  id: string;
+  stdin: string;
+  timeLimitMs?: number;
+}
+
+export interface BatchExecutionPayload extends ExecutionPayload {
+  cases: BatchExecutionCase[];
+}
+
+export interface BatchExecutionCaseResult {
+  id: string;
+  status: "Completed" | "Failed";
+  stdout: string;
+  error: string;
+  executionTime: number;
+  memoryUsed: number;
+  exitCode: number | null;
+}
+
+export interface BatchExecutionResult {
+  compileError?: string;
+  results: BatchExecutionCaseResult[];
+}
+
 export type DsaDifficulty = "Easy" | "Medium" | "Hard";
 
 export type DsaVerdictStatus =
@@ -79,6 +104,7 @@ export interface DsaTestCaseResult {
   testCaseId: string;
   testCaseName?: string;
   passed: boolean;
+  verdict?: DsaVerdictStatus;
   actualOutput: string;
   expectedOutput: string;
   executionTimeMs: number;
@@ -92,6 +118,7 @@ export interface DsaRunSummary {
   passed: number;
   failed: number;
   executionTimeMs: number;
+  memoryUsedKb?: number;
   results: DsaTestCaseResult[];
   status: DsaRunStatus;
   verdict?: DsaVerdictStatus;

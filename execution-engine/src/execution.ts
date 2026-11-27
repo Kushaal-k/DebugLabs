@@ -1,7 +1,10 @@
+import crypto from "node:crypto";
 import path from "node:path";
 import Dockerode from "dockerode";
 import tar from "tar-stream";
 import type {
+  BatchExecutionPayload,
+  BatchExecutionResult,
   ExecutionFile,
   ExecutionPayload,
   ExecutionResult,
@@ -197,7 +200,10 @@ function resolveRunCommand(payload: ExecutionPayload, entrypoint: string): strin
   }
 }
 
-export async function executeCode(payload: ExecutionPayload): Promise<ExecutionResult> {
+export async function executeCode(
+  payload: ExecutionPayload,
+  timeoutMs = EXECUTION_TIMEOUT_MS
+): Promise<ExecutionResult> {
   const { language, stdin } = payload;
   const entrypoint = payload.entrypoint || DEFAULT_ENTRYPOINTS[language];
   const files: ExecutionFile[] =
@@ -240,7 +246,7 @@ export async function executeCode(payload: ExecutionPayload): Promise<ExecutionR
         PidsLimit: 64,
       },
       NetworkDisabled: true,
-      StopTimeout: Math.ceil(EXECUTION_TIMEOUT_MS / 1000),
+      StopTimeout: Math.ceil(timeoutMs / 1000),
       Cmd: cmd,
       AttachStdin: hasStdin,
       OpenStdin: hasStdin,
@@ -270,21 +276,26 @@ export async function executeCode(payload: ExecutionPayload): Promise<ExecutionR
     }
 
     let timeoutId: ReturnType<typeof setTimeout> | undefined;
-    const waitResult = await Promise.race([
-      container.wait().finally(() => {
-        if (timeoutId) clearTimeout(timeoutId);
-      }),
-      new Promise<never>((_, reject) => {
-        timeoutId = setTimeout(async () => {
-          await container?.kill().catch(() => {});
-          reject(new Error(`Execution timed out after ${EXECUTION_TIMEOUT_MS}ms`));
-        }, EXECUTION_TIMEOUT_MS);
-      }),
-    ]);
+    try {
+      const waitResult = await Promise.race([
+        container.wait().finally(() => {
+          if (timeoutId) clearTimeout(timeoutId);
+        }),
+        new Promise<never>((_, reject) => {
+          timeoutId = setTimeout(async () => {
+            await container?.kill().catch(() => {});
+            reject(new Error(`Execution timed out after ${timeoutMs}ms`));
+          }, timeoutMs);
+        }),
+      ]);
 
-    exitCode = waitResult.StatusCode;
-    executionTime = performance.now() - startTime;
-    status = exitCode === 0 ? "Completed" : "Failed";
+      exitCode = waitResult.StatusCode;
+      executionTime = performance.now() - startTime;
+      status = exitCode === 0 ? "Completed" : "Failed";
+    } catch (waitError) {
+      executionTime = performance.now() - startTime;
+      throw waitError;
+    }
 
     try {
       const stats = await container.stats({ stream: false });
@@ -318,4 +329,158 @@ export async function executeCode(payload: ExecutionPayload): Promise<ExecutionR
     memoryUsed: memoryUsage,
     exitCode,
   };
+}
+
+function getCompileCommand(language: SUPPORTED_LANGUAGES): string | null {
+  switch (language) {
+    case "cpp":
+      return `mkdir -p /tmp/out && g++ -O2 -o /tmp/out/main $(find ${WORKSPACE_DIR} -maxdepth 1 -name '*.cpp')`;
+    case "c":
+      return `mkdir -p /tmp/out && gcc -O2 -o /tmp/out/main $(find ${WORKSPACE_DIR} -maxdepth 1 -name '*.c')`;
+    case "java":
+      return `mkdir -p /tmp/out && javac $(find ${WORKSPACE_DIR} -maxdepth 1 -name '*.java') -d /tmp/out`;
+    case "csharp":
+      return `dotnet build ${WORKSPACE_DIR} -c Release --nologo -v q`;
+    default:
+      return null;
+  }
+}
+
+function getSingleRunCommand(language: SUPPORTED_LANGUAGES, entrypoint: string): string {
+  const safe = sanitizeRelativePath(entrypoint);
+  switch (language) {
+    case "javascript":
+      return `node ${WORKSPACE_DIR}/${safe}`;
+    case "python":
+      return `python3 ${WORKSPACE_DIR}/${safe}`;
+    case "cpp":
+    case "c":
+      return `/tmp/out/main`;
+    case "java":
+      return `java -cp /tmp/out ${safe.replace(/\.java$/, "").replace(/\//g, ".")}`;
+    case "csharp":
+      return `dotnet run --no-build --project ${WORKSPACE_DIR} -c Release`;
+    default:
+      return `node ${WORKSPACE_DIR}/${safe}`;
+  }
+}
+
+// Runs all test cases in one container: compiles once, loops over inputs, and splits outputs by marker.
+export async function executeBatch(payload: BatchExecutionPayload): Promise<BatchExecutionResult> {
+  const { language, cases } = payload;
+  if (cases.length === 0) return { results: [] };
+
+  const entrypoint = payload.entrypoint || DEFAULT_ENTRYPOINTS[language];
+  const userFiles: ExecutionFile[] =
+    payload.files && payload.files.length > 0
+      ? payload.files
+      : [{ path: entrypoint, content: payload.code ?? "" }];
+
+  const token = `__DL_${crypto.randomUUID()}__`;
+  const compileCmd = getCompileCommand(language);
+  const runCmd = getSingleRunCommand(language, entrypoint);
+
+  const scriptLines = ["#!/bin/sh"];
+  if (compileCmd) {
+    scriptLines.push(
+      `if ! (${compileCmd}) >/tmp/c.out 2>/tmp/c.err; then`,
+      `  echo "${token}:COMPILE_ERROR"`,
+      `  cat /tmp/c.err /tmp/c.out`,
+      `  exit 0`,
+      `fi`
+    );
+  }
+
+  cases.forEach((c, i) => {
+    const secs = Math.max(1, Math.ceil((c.timeLimitMs ?? EXECUTION_TIMEOUT_MS) / 1000));
+    scriptLines.push(
+      `t0=$(date +%s%3N | grep -E '^[0-9]+$' || echo 0)`,
+      `timeout ${secs} ${runCmd} < ${WORKSPACE_DIR}/__in_${i} >/tmp/o_${i} 2>/tmp/e_${i}`,
+      `rc=$?`,
+      `t1=$(date +%s%3N | grep -E '^[0-9]+$' || echo 0)`,
+      `echo "${token}:CASE:${i}:$rc:$((t1 - t0))"`,
+      `cat /tmp/o_${i}`,
+      `echo ""`,
+      `echo "${token}:ERR:${i}"`,
+      `cat /tmp/e_${i}`,
+      `echo ""`,
+      `echo "${token}:END:${i}"`
+    );
+  });
+
+  const inputFiles: ExecutionFile[] = cases.map((c, i) => ({
+    path: `__in_${i}`,
+    content: c.stdin ?? "",
+  }));
+
+  const totalTimeoutMs = Math.max(
+    30_000,
+    cases.reduce((sum, c) => sum + (c.timeLimitMs ?? EXECUTION_TIMEOUT_MS), 15_000)
+  );
+
+  const res = await executeCode(
+    {
+      language,
+      files: [...userFiles, { path: "__batch.sh", content: scriptLines.join("\n") + "\n" }, ...inputFiles],
+      command: `sh ${WORKSPACE_DIR}/__batch.sh`,
+    },
+    totalTimeoutMs
+  );
+
+  if (res.stdout.includes(`${token}:COMPILE_ERROR`)) {
+    const compileError = res.stdout.split(`${token}:COMPILE_ERROR`)[1]?.trim() || res.error || "Compilation failed";
+    return {
+      compileError,
+      results: cases.map((c) => ({
+        id: c.id,
+        status: "Failed",
+        stdout: "",
+        error: compileError,
+        executionTime: 0,
+        memoryUsed: res.memoryUsed,
+        exitCode: 1,
+      })),
+    };
+  }
+
+  const results = cases.map((c, i) => {
+    const section = res.stdout.split(`${token}:CASE:${i}:`)[1]?.split(`${token}:END:${i}`)[0];
+    if (!section) {
+      return {
+        id: c.id,
+        status: "Failed" as const,
+        stdout: "",
+        error: res.error || "Execution failed",
+        executionTime: 0,
+        memoryUsed: res.memoryUsed,
+        exitCode: res.exitCode ?? 1,
+      };
+    }
+
+    const firstNewline = section.indexOf("\n");
+    const [rcStr, durStr] = section.slice(0, firstNewline).split(":");
+    const rc = Number.parseInt(rcStr ?? "1", 10);
+    const dur = Number.parseFloat(durStr ?? "0");
+    const body = section.slice(firstNewline + 1);
+    const [rawOut = "", rawErr = ""] = body.split(`${token}:ERR:${i}\n`);
+    const stdout = rawOut.endsWith("\n") ? rawOut.slice(0, -1) : rawOut;
+    let error = rawErr.endsWith("\n") ? rawErr.slice(0, -1) : rawErr;
+
+    if (rc === 124 || rc === 143) {
+      const msg = `Execution timed out after ${c.timeLimitMs ?? EXECUTION_TIMEOUT_MS}ms`;
+      error = error ? `${msg}\n${error}` : msg;
+    }
+
+    return {
+      id: c.id,
+      status: rc === 0 ? ("Completed" as const) : ("Failed" as const),
+      stdout: stdout.slice(0, MAX_OUTPUT_SIZE),
+      error: error.slice(0, MAX_OUTPUT_SIZE),
+      executionTime: Number.isFinite(dur) ? dur : 0,
+      memoryUsed: res.memoryUsed,
+      exitCode: Number.isFinite(rc) ? rc : null,
+    };
+  });
+
+  return { results };
 }

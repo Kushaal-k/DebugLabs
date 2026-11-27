@@ -114,6 +114,62 @@ test("summarizeRun computes verdicts accurately", () => {
   assert.equal(ceSummary.verdict, "Compilation Error");
 });
 
+test("evaluateTestCase and summarizeRun classify TLE, MLE, Runtime Error, Internal Error, and memoryUsedKb", () => {
+  const tc = { id: "tc-1", input: "", expectedOutput: "0 1" };
+
+  // Time Limit Exceeded via timeout message
+  const tleMsg = evaluateTestCase("", "Execution timed out after 10000ms", null, 10005, tc, {
+    memoryUsedBytes: 2048 * 1024,
+  });
+  assert.equal(tleMsg.passed, false);
+  assert.equal(tleMsg.verdict, "Time Limit Exceeded");
+  assert.equal(tleMsg.memoryUsedKb, 2048);
+
+  // Time Limit Exceeded via problem timeLimitMs
+  const tleLimit = evaluateTestCase("0 1", "", 0, 2500, tc, { timeLimitMs: 2000 });
+  assert.equal(tleLimit.passed, false);
+  assert.equal(tleLimit.verdict, "Time Limit Exceeded");
+
+  // Memory Limit Exceeded via memoryLimitMb
+  const mleLimit = evaluateTestCase("0 1", "", 0, 50, tc, {
+    memoryUsedBytes: 300 * 1024 * 1024,
+    memoryLimitMb: 256,
+  });
+  assert.equal(mleLimit.passed, false);
+  assert.equal(mleLimit.verdict, "Memory Limit Exceeded");
+  assert.equal(mleLimit.memoryUsedKb, 300 * 1024);
+
+  // Memory Limit Exceeded via OOM killer / error
+  const mleOom = evaluateTestCase("", "Killed", 137, 100, tc);
+  assert.equal(mleOom.passed, false);
+  assert.equal(mleOom.verdict, "Memory Limit Exceeded");
+
+  // Runtime Error (must not be misclassified as Compilation Error)
+  const rePy = evaluateTestCase("", "Traceback (most recent call last):\nIndexError: list index out of range", 1, 15, tc, {
+    memoryUsedBytes: 1024 * 1024,
+  });
+  assert.equal(rePy.passed, false);
+  assert.equal(rePy.verdict, "Runtime Error");
+  assert.equal(rePy.memoryUsedKb, 1024);
+
+  const reSegfault = evaluateTestCase("", "Segmentation fault (core dumped)", 139, 12, tc);
+  assert.equal(reSegfault.verdict, "Runtime Error");
+
+  // Internal Error
+  const ie = evaluateTestCase("", "connect ENOENT /var/run/docker.sock", null, 0, tc);
+  assert.equal(ie.verdict, "Internal Error");
+
+  // summarizeRun aggregates peak memoryUsedKb and verdict priority
+  const passCase = evaluateTestCase("0 1", "", 0, 10, tc, { memoryUsedBytes: 512 * 1024 });
+  const tleSummary = summarizeRun([passCase, tleMsg], 10015);
+  assert.equal(tleSummary.verdict, "Time Limit Exceeded");
+  assert.equal(tleSummary.memoryUsedKb, 2048);
+
+  const reSummary = summarizeRun([passCase, rePy], 25);
+  assert.equal(reSummary.verdict, "Runtime Error");
+  assert.equal(reSummary.memoryUsedKb, 1024);
+});
+
 test("JavaScript starter code flags bug and fixed code passes", () => {
   const tc = TWO_SUM_PROBLEM.testCases[0];
 
