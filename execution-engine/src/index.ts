@@ -1,6 +1,10 @@
 import express from "express";
-import type { ServiceStatus, ExecutionPayload } from "@debugLabs/shared";
-import { executeCode } from "./execution.js";
+import type {
+  ServiceStatus,
+  ExecutionPayload,
+  BatchExecutionPayload,
+} from "@debugLabs/shared";
+import { executeCode, executeBatch } from "./execution.js";
 import "./worker.js";
 
 const app = express();
@@ -32,7 +36,29 @@ app.post("/execute", async (req, res) => {
     console.error(`[execution engine] Error executing code: ${error}`);
     res.status(500).json({ error: "Internal server error" });
   }
-})
+});
+
+app.post("/execute-batch", async (req, res) => {
+  const payload: BatchExecutionPayload = req.body;
+
+  if (
+    (!payload.code && (!payload.files || payload.files.length === 0)) ||
+    !payload.language ||
+    !Array.isArray(payload.cases)
+  ) {
+    return res.status(400).json({
+      error: "Missing required fields: code or files, language, and cases array",
+    });
+  }
+
+  try {
+    const result = await executeBatch(payload);
+    res.json(result);
+  } catch (error) {
+    console.error(`[execution engine] Error executing batch: ${error}`);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
 
 const server = app.listen(port, host, (error) => {
   if (error) {

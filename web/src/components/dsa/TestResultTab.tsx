@@ -1,6 +1,13 @@
 import { useState } from 'react';
-import { CheckCircle2, XCircle, AlertCircle, Clock } from 'lucide-react';
+import { CheckCircle2, XCircle, AlertCircle, Clock, Cpu } from 'lucide-react';
 import type { DsaRunSummary, DsaSubmissionResult } from '../../types/dsa';
+
+function formatMemory(memoryUsedKb: number): string {
+  if (memoryUsedKb >= 1024) {
+    return `${(memoryUsedKb / 1024).toFixed(1)} MB`;
+  }
+  return `${memoryUsedKb} KB`;
+}
 
 interface Props {
   runSummary: DsaRunSummary | null;
@@ -49,6 +56,9 @@ export function TestResultTab({
   const executionTimeMs = isSubmission
     ? submissionResult!.executionTimeMs
     : runSummary!.executionTimeMs;
+  const memoryUsedKb = isSubmission
+    ? submissionResult!.memoryUsedKb
+    : runSummary!.memoryUsedKb;
 
   const activeResult = results[selectedCaseIndex] || results[0];
 
@@ -73,9 +83,17 @@ export function TestResultTab({
           </span>
         </div>
 
-        <div className="flex items-center gap-1.5 text-[11px] font-mono text-lab-muted tabular-nums">
-          <Clock className="w-3.5 h-3.5 stroke-[1.5]" />
-          <span>{executionTimeMs} ms</span>
+        <div className="flex items-center gap-3 text-[11px] font-mono text-lab-muted tabular-nums">
+          {memoryUsedKb !== undefined && memoryUsedKb > 0 && (
+            <div className="flex items-center gap-1.5">
+              <Cpu className="w-3.5 h-3.5 stroke-[1.5]" />
+              <span>{formatMemory(memoryUsedKb)}</span>
+            </div>
+          )}
+          <div className="flex items-center gap-1.5">
+            <Clock className="w-3.5 h-3.5 stroke-[1.5]" />
+            <span>{executionTimeMs} ms</span>
+          </div>
         </div>
       </div>
 
