@@ -14,6 +14,29 @@ Development starts the API at `http://127.0.0.1:3001`, the execution engine at
 is an alias for this development command. Both backend services expose `/health`;
 the execution engine currently provides only this health endpoint.
 
+## OAuth sign-in
+
+The web app supports Google and GitHub sign-in using Passport sessions stored in
+MongoDB. OAuth users and sessions use the backend's existing `MONGODB_URI`
+(`debuglabs` locally); no separate database or frontend Mongo configuration is
+required.
+
+Set these variables in your local `server/.env` or server environment:
+`SESSION_SECRET`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`,
+`GITHUB_CLIENT_ID`, and `GITHUB_CLIENT_SECRET`. `WEB_ORIGIN` defaults to
+`http://localhost:5173`, and `SERVER_ORIGIN` defaults to
+`http://localhost:3001`. Register these callback URLs with the providers:
+
+- Google: `http://localhost:3001/api/v1/auth/google/callback`
+- GitHub: `http://localhost:3001/api/v1/auth/github/callback`
+
+In production, configure the origins and `MONGODB_URI` for the deployment, use
+HTTPS, and set `SESSION_COOKIE_SAME_SITE=none` when the frontend and API are
+cross-site. Sessions use an HTTP-only cookie; OAuth tokens are not stored or
+sent to the browser. Provider availability is reported at
+`/api/v1/auth/config`. Sign-in stays disabled until session and provider
+credentials are configured.
+
 ```sh
 npm run build      # Build shared first, then both services and the frontend
 npm run typecheck  # Check every workspace

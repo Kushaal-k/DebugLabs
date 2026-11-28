@@ -8,11 +8,14 @@ import {
   SlidersHorizontal,
   X,
   Loader2,
+  LogOut,
 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { ThemeToggle } from '../common/theme';
 import { LabShell } from '../common/LabShell';
 import { DEFAULT_DSA_PROBLEMS } from '../../data/dsaScenarios';
 import type { DsaDifficulty, DsaProblem, DsaProblemSummary } from '../../types/dsa';
+import { useAuth } from '../../context/useAuth';
 
 interface Props {
   problems?: (DsaProblem | DsaProblemSummary)[];
@@ -117,10 +120,14 @@ export function DsaDashboard({
   onOpenProblem,
   isLoading = false,
 }: Props) {
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
   const [query, setQuery] = useState('');
   const [difficulty, setDifficulty] = useState('All');
   const [topic, setTopic] = useState('All');
   const [showFilters, setShowFilters] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [logoutError, setLogoutError] = useState<string | null>(null);
 
   const topics = useMemo(
     () =>
@@ -160,6 +167,23 @@ export function DsaDashboard({
     setTopic('All');
   };
 
+  async function handleLogout() {
+    setIsLoggingOut(true);
+    setLogoutError(null);
+    try {
+      await logout();
+      navigate('/login', { replace: true });
+    } catch (error) {
+      setLogoutError(
+        error instanceof Error
+          ? error.message
+          : 'Could not sign out. Please try again.'
+      );
+    } finally {
+      setIsLoggingOut(false);
+    }
+  }
+
   return (
     <LabShell>
       <div className="relative z-10 h-full overflow-y-auto">
@@ -174,11 +198,40 @@ export function DsaDashboard({
                 DebugLabs
               </span>
             </div>
-            <ThemeToggle />
+            <div className="flex min-w-0 items-center gap-2">
+              <span
+                title={user?.displayName}
+                className="max-w-20 truncate text-xs text-lab-secondary sm:max-w-32"
+              >
+                {user?.displayName}
+              </span>
+              <ThemeToggle />
+              <button
+                type="button"
+                onClick={() => void handleLogout()}
+                disabled={isLoggingOut}
+                className="flex h-8 shrink-0 cursor-pointer items-center gap-1.5 rounded-full px-2.5 text-xs text-lab-muted transition-colors hover:bg-lab-line/10 hover:text-lab-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-lab-positive disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {isLoggingOut ? (
+                  <Loader2 aria-hidden="true" className="size-4 animate-spin" />
+                ) : (
+                  <LogOut aria-hidden="true" className="size-4" />
+                )}
+                Logout
+              </button>
+            </div>
           </div>
         </header>
 
         <main className="mx-auto max-w-3xl px-4 pb-16 pt-10 sm:px-6">
+          {logoutError && (
+            <p
+              role="alert"
+              className="mb-4 rounded-xl border border-rose-400/20 bg-rose-400/10 px-3 py-2 text-sm text-lab-danger"
+            >
+              {logoutError}
+            </p>
+          )}
           <div className="mb-8">
             <p className="text-[11px] font-medium uppercase tracking-[0.18em] text-lab-muted">
               DSA
