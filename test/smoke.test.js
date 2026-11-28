@@ -47,7 +47,16 @@ test("server starts and serves /health on a temporary port", async (t) => {
   const serverPath = path.join(rootDir, "server", "dist", "index.js");
 
   const child = spawn(process.execPath, [serverPath], {
-    env: { ...process.env, PORT: String(port), HOST: "127.0.0.1" },
+    env: {
+      ...process.env,
+      PORT: String(port),
+      HOST: "127.0.0.1",
+      SESSION_SECRET: "",
+      GOOGLE_CLIENT_ID: "",
+      GOOGLE_CLIENT_SECRET: "",
+      GITHUB_CLIENT_ID: "",
+      GITHUB_CLIENT_SECRET: "",
+    },
     stdio: ["ignore", "ignore", "ignore"],
   });
 
@@ -57,6 +66,26 @@ test("server starts and serves /health on a temporary port", async (t) => {
 
   const body = await waitForHealth(port, "server");
   assert.deepEqual(body, { service: "server", status: "ok" });
+
+  const configResponse = await fetch(
+    `http://127.0.0.1:${port}/api/v1/auth/config`
+  );
+  assert.equal(configResponse.status, 200);
+  assert.deepEqual(await configResponse.json(), {
+    providers: { google: false, github: false },
+  });
+
+  const sessionResponse = await fetch(
+    `http://127.0.0.1:${port}/api/v1/auth/me`
+  );
+  assert.equal(sessionResponse.status, 503);
+
+  for (const provider of ["google", "github"]) {
+    const providerResponse = await fetch(
+      `http://127.0.0.1:${port}/api/v1/auth/${provider}`
+    );
+    assert.equal(providerResponse.status, 503);
+  }
 });
 
 test("execution-engine starts and serves /health on a temporary port", async (t) => {

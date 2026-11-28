@@ -1,6 +1,7 @@
 import mongoose from "mongoose";
 
-const mongoUri = process.env.MONGODB_URI ?? "mongodb://127.0.0.1:27017/debuglabs";
+export const mongoUri =
+  process.env.MONGODB_URI ?? "mongodb://127.0.0.1:27017/debuglabs";
 
 export async function connectDB(): Promise<typeof mongoose | null> {
   try {
