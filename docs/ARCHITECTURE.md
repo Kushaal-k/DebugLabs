@@ -102,6 +102,9 @@ Located in `shared/index.ts`:
 ---
 
 ### 3.2 Frontend Client (`web`)
+- **Authentication**: `web/src/context/AuthContext.tsx` restores the session from
+  the backend on page load. Login/signup routes launch provider OAuth, and the
+  main labs interface is protected until the server confirms the session.
 - **Problem Catalog & Filtering**: `web/src/components/dsa/DsaDashboard.tsx` allows users to filter problems by difficulty (`Easy`, `Medium`, `Hard`), category (`Arrays & Hashing`, `Dynamic Programming`, etc.), or keyword search.
 - **IDE Layout**: `web/src/App.tsx` and `web/src/components/common/LabShell.tsx` manage a multi-pane layout:
   - **Left Panel**: Problem statement, constraints, examples, hints, and bug descriptions (`DsaProblemTab.tsx`).
@@ -118,6 +121,13 @@ Located in `shared/index.ts`:
 
 ### 3.3 Backend API Server (`server`)
 Located in `server/src/index.ts`:
+- **Authentication**: Google and GitHub OAuth use Passport strategies in
+  `server/src/auth/passport.ts`. User identities are stored in MongoDB, and
+  `express-session` persists authenticated sessions through MongoDB using the
+  same `MONGODB_URI` as the existing database connection. Auth endpoints are
+  mounted at `/api/v1/auth`; OAuth callbacks redirect to the frontend's
+  `/auth/callback` route. Provider credentials and session secrets remain
+  server-side environment variables.
 - **Problem Management**: Problems are loaded from `server/src/challenges/dsa/problems/index.ts`. Hidden test cases are stripped via `getDsaProblemForClient` before sending problem definitions to the frontend.
 - **Grader Engine**: In `server/src/controllers/dsa.controller.ts` and `server/src/challenges/dsa/harness.ts`:
   - Sends all test cases in a single `POST /execute-batch` request.
