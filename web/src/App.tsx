@@ -1,5 +1,12 @@
 import { useState, useCallback, useEffect } from 'react';
+import { Navigate, Route, Routes } from 'react-router-dom';
 import { DsaDashboard } from './components/dsa/DsaDashboard';
+import { AuthPage } from './components/auth/AuthPage';
+import {
+  OAuthCallback,
+  RedirectAuthenticated,
+  RequireAuthenticated,
+} from './components/auth/AuthRoutes';
 import { DEFAULT_DSA_PROBLEMS } from './data/dsaScenarios';
 import type { ProjectFile } from './types/workspace';
 import type {
@@ -36,7 +43,7 @@ const FILE_NAMES: Record<SupportedLanguage, string> = {
   csharp: 'Solution.cs',
 };
 
-export default function App() {
+function LabApp() {
   const [showDashboard, setShowDashboard] = useState(true);
 
   const [currentProblem, setCurrentProblem] = useState<DsaProblem>(
@@ -424,5 +431,21 @@ export default function App() {
         />
       )}
     </LabShell>
+  );
+}
+
+export default function App() {
+  return (
+    <Routes>
+      <Route element={<RequireAuthenticated />}>
+        <Route path="/" element={<LabApp />} />
+      </Route>
+      <Route path="/auth/callback" element={<OAuthCallback />} />
+      <Route element={<RedirectAuthenticated />}>
+        <Route path="/login" element={<AuthPage mode="login" />} />
+        <Route path="/signup" element={<AuthPage mode="signup" />} />
+      </Route>
+      <Route path="*" element={<Navigate to="/" replace />} />
+    </Routes>
   );
 }
