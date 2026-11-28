@@ -14,6 +14,7 @@ export const webOrigin = (
 
 const sessionEnabled = Boolean(process.env.SESSION_SECRET);
 
+
 export const configuredProviders = {
   google:
     sessionEnabled &&
